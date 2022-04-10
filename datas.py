@@ -4,16 +4,21 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import requests
+
 from info import HEADERS, URL
 
+REGION = {}
 
-region = {}
+
 def get_region_info(id_for_query):
     global region
-    if id_for_query not in region:
+    if id_for_query not in REGION:
         returned_region_info = Base().request("machine_regions", "", "", "")
-        region = {responses["id"]: responses["name"] for responses in returned_region_info}
+        region = {
+            responses["id"]: responses["name"] for responses in returned_region_info
+        }
     return region[id_for_query]
+
 
 @dataclass
 class ExcelInfo:
@@ -31,9 +36,16 @@ class ExcelInfo:
 class Base:
     """Base class for init"""
 
-    def request(self, query_type: str, query_value: str, query_key: str, not_empty_query: str="="):
+    def request(
+        self,
+        query_type: str,
+        query_value: str,
+        query_key: str,
+        not_empty_query: str = "=",
+    ):
         defined_url = f"{URL}//{query_type}//?{query_value}{not_empty_query}{query_key}"
         return requests.get(defined_url, headers=HEADERS).json()["data"]
+
 
 class Task(Base):
     """class for get requests of task info"""
@@ -48,8 +60,12 @@ class Task(Base):
         self.driver_id = returned_info["driver_id"]
         self.work_type_id = returned_info["work_type_id"]
         self.implement_id = returned_info["implement_id"]
-        time_start = datetime.fromisoformat(self.start_time).replace(second=0, microsecond=0, tzinfo=None)
-        time_end = datetime.fromisoformat(self.end_time).replace(second=0, microsecond=0, tzinfo=None)
+        time_start = datetime.fromisoformat(self.start_time).replace(
+            second=0, microsecond=0, tzinfo=None
+        )
+        time_end = datetime.fromisoformat(self.end_time).replace(
+            second=0, microsecond=0, tzinfo=None
+        )
         self.time = f"{time_start} - {time_end}"
 
         self.machine = Machine(self.machine_id)
@@ -65,7 +81,9 @@ class Machine(Base):
         """get info by request"""
         returned_info = self.request("machines", "id", id_for_query)[0]
         self.name = returned_info["name"]
-        returned_machines_info = self.request("machine_region_mapping_items","machine_id" , id_for_query)[0]
+        returned_machines_info = self.request(
+            "machine_region_mapping_items", "machine_id", id_for_query
+        )[0]
         self.region = get_region_info(returned_machines_info["machine_region_id"])
 
 
