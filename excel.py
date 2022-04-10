@@ -4,6 +4,7 @@ import sys
 from dataclasses import dataclass
 
 import openpyxl as xl
+from openpyxl.workbook.protection import WorkbookProtection
 
 CELLS = {
     'task': 'F1',
@@ -46,8 +47,7 @@ class WaybillExcel():
         path = f'{path_to_save}{file_name}'
         pathlib.Path(path_to_save).mkdir(parents=True, exist_ok=True)
 
-        workbook.security.workbookPassword = 'imax'
-        workbook.security.lockStructure = True
+        workbook.security = WorkbookProtection(workbookPassword='imax', lockStructure=True)
 
         workbook.save(path)
 
