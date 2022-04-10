@@ -1,6 +1,8 @@
 """ Создание файла по полученным данным """
-from dataclasses import dataclass
 import pathlib
+import sys
+from dataclasses import dataclass
+
 import openpyxl as xl
 
 CELLS = {
@@ -13,7 +15,7 @@ CELLS = {
     'implement': 'B5',
 }
 
-DEFAULT_FILE_LOCATION = 'def.xlsx'
+DEFAULT_FILE_LOCATION = f'{sys._MEIPASS}/def/def.xlsx'
 
 
 @dataclass
@@ -43,6 +45,10 @@ class WaybillExcel():
         file_name = f'{", ".join(map(str, self.task_ids))}.xlsx'
         path = f'{path_to_save}{file_name}'
         pathlib.Path(path_to_save).mkdir(parents=True, exist_ok=True)
+
+        workbook.security.workbookPassword = 'imax'
+        workbook.security.lockStructure = True
+
         workbook.save(path)
 
     def fill_waybill(self, workbook: xl.workbook.Workbook):
