@@ -1,6 +1,6 @@
 """ Создание файла по полученным данным """
-from datas import ExcelInfo
-
+from dataclasses import dataclass
+import pathlib
 import openpyxl as xl
 
 CELLS = {
@@ -15,9 +15,23 @@ CELLS = {
 
 DEFAULT_FILE_LOCATION = 'def.xlsx'
 
+
+@dataclass
+class ExcelInfo:
+    """dataclass for storing info about task"""
+
+    task: str
+    time: str
+    machine: str
+    region: str
+    driver: str
+    work: str
+    implement: str
+
+
 class WaybillExcel():
     """ Класс для создания файла по полученным данным """
-    def __init__(self, infos: list[ExcelInfo], path_to_save: str | None = None):
+    def __init__(self, infos: list[ExcelInfo], path_to_save: str = '.\\'):
         """ Создаем копию дефолтного файла при создании экземпляра """
 
         self.infos = infos
@@ -27,7 +41,8 @@ class WaybillExcel():
         self.fill_waybill(workbook)
         # Сохраняем
         file_name = f'{", ".join(map(str, self.task_ids))}.xlsx'
-        path = f'{path_to_save}\\{file_name}' if path_to_save else file_name
+        path = f'{path_to_save}{file_name}'
+        pathlib.Path(path_to_save).mkdir(parents=True, exist_ok=True)
         workbook.save(path)
 
     def fill_waybill(self, workbook: xl.workbook.Workbook):

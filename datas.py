@@ -1,6 +1,5 @@
 """for requests"""
 
-from dataclasses import dataclass
 from datetime import datetime
 
 import requests
@@ -18,19 +17,6 @@ def get_region_info(id_for_query):
             responses["id"]: responses["name"] for responses in returned_region_info
         }
     return region[id_for_query]
-
-
-@dataclass
-class ExcelInfo:
-    """dataclass for storing info about task"""
-
-    task: str
-    time: str
-    machine: str
-    region: str
-    driver: str
-    work: str
-    implement: str
 
 
 class Base:
