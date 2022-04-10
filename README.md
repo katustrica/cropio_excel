@@ -1,0 +1,1 @@
+pyinstaller .\interface.py --windowed --onefile --add-data="C:\sbis\cropio\def.xlsx;def"
