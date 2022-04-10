@@ -17,69 +17,78 @@ class ExcelInfo:
 
 class Task:
     def __init__(self, task_id):
-        self.info = {}
-        self.get_task_info(task_id)
+        self.info = self.get_task_info(task_id)
 
     def get_task_info(self, task_id):
         url_ = url + "machine_tasks/?id=" + str(task_id)
         returned_info = requests.get(url_, headers=headers).json()["data"][0]
 
-        self.info["start_time"] = returned_info["start_time"]
-        self.info["end_time"] = returned_info["end_time"]
-        self.info["machine_id"] = returned_info["machine_id"]
-        self.info["driver_id"] = returned_info["driver_id"]
-        self.info["work_type_id"] = returned_info["work_type_id"]
-        self.info["implement_id"] = returned_info["implement_id"]
+        info = {}
+        info["start_time"] = returned_info["start_time"]
+        info["end_time"] = returned_info["end_time"]
+        info["machine_id"] = returned_info["machine_id"]
+        info["driver_id"] = returned_info["driver_id"]
+        info["work_type_id"] = returned_info["work_type_id"]
+        info["implement_id"] = returned_info["implement_id"]
+
+        return info
 
 
 class Machine:
     def __init__(self, machine_id):
-        self.info = {}
-        self.get_task_info(machine_id)
+        self.info = self.get_task_info(machine_id)
 
     def get_task_info(self, machine_id):
+        info = {}
         url_ = url + "machines/?id=" + str(machine_id)
         returned_info = requests.get(url_, headers=headers).json()["data"][0]
-        self.info["name"] = returned_info["name"]
+        info["name"] = returned_info["name"]
 
         url_ = url + "machine_region_mapping_items/?machine_id=" + str(machine_id)
         returned_info = requests.get(url_, headers=headers).json()["data"][0]
         url_ = url + "machine_regions/?id=" + str(returned_info["machine_region_id"])
         returned_info = requests.get(url_, headers=headers).json()["data"][1]
-        self.info["region"] = returned_info["name"]
+        info["region"] = returned_info["name"]
+
+        return info
 
 
 class Driver:
     def __init__(self, driver_id):
-        self.info = {}
-        self.get_task_info(driver_id)
+        self.info = self.get_task_info(driver_id)
 
     def get_task_info(self, driver_id):
+        info = {}
         url_ = url + "users/?id=" + str(driver_id)
         returned_info = requests.get(url_, headers=headers).json()["data"][0]
-        self.info["driver"] = returned_info["username"]
+        info["driver"] = returned_info["username"]
+
+        return info
 
 
 class Work_Type:
     def __init__(self, work_type_id):
-        self.info = {}
-        self.get_task_info(work_type_id)
+        self.info = self.get_task_info(work_type_id)
 
     def get_task_info(self, work_type_id):
+        info = {}
         url_ = url + "work_types/?id=" + str(work_type_id)
         returned_info = requests.get(url_, headers=headers).json()["data"][0]
-        self.info["work_type_name"] = returned_info["name"]
+        info["work_type_name"] = returned_info["name"]
 
+        return info
 
 class Implement:
     def __init__(self, implement_id):
-        self.info = {}
-        self.get_task_info(implement_id)
+        self.info = self.get_task_info(implement_id)
 
     def get_task_info(self, implement_id):
+        info = {}
         url_ = url + "implements/?id=" + str(implement_id)
         returned_info = requests.get(url_, headers=headers).json()["data"][0]
-        self.info["implement_name"] = returned_info["name"]
+        info["implement_name"] = returned_info["name"]
+
+        return info
 
 
 if __name__ == "__main__":
