@@ -115,7 +115,7 @@ class WaybillExcel(ExcelFile):
             for name, _, pos in self.cells:
                 if name == 'time':
                     value = (
-                        f'{info.start_day} {info.start_month} {info.start_year}г. {info.start_time} -'
+                        f'{info.start_day} {info.start_month} {info.start_year}г. {info.start_time} - '
                         f'{info.end_day} {info.end_month} {info.end_year}г. {info.end_time}'
                     )
                 else:
