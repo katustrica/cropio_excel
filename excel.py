@@ -139,12 +139,10 @@ class KamazExcel(ExcelFile):
         def_worksheets = (workbook['Лист1'], workbook['Лист2'])
 
         for num_info, info in enumerate(self.infos):
-            num_info = num_info if num_info == 0 else num_info*2
             # Создаем и заполняем новый WorkSheet с именем таски
             worksheets = tuple(workbook.copy_worksheet(sheet) for sheet in def_worksheets)
             for num, sheet in enumerate(worksheets):
-                num = 2 if num % 2 else 1
-                sheet.title = f'{info.task} стр. {num}'
+                sheet.title = f'{info.task} стр. {num+1}'
 
             for name, sheet_num, pos in self.cells:
                 if 'driver_short' in name:
@@ -156,7 +154,7 @@ class KamazExcel(ExcelFile):
                 else:
                     value = getattr(info, name)
                 if value:
-                    worksheets[num_info+sheet_num][pos] = value
+                    worksheets[sheet_num][pos] = value
 
         # Удаляем дефолтные страницы
         for sheet in def_worksheets:
