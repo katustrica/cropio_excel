@@ -1,7 +1,8 @@
 """for requests"""
 
 import locale
-from datetime import datetime
+from datetime import datetime, time, timedelta
+from typing import Any, Dict, Optional, Union
 
 import requests
 
@@ -42,29 +43,58 @@ def get_region_info(id_for_query):
 class Base:
     """Base class for init"""
 
+    @staticmethod
     def request(
-        self,
         query_type: str,
-        query_value: str,
-        query_key: str,
+        query_value: Union[str, list],
+        query_key: Union[str, list],
         not_empty_query: str = "=",
     ):
-        defined_url = f"{URL}//{query_type}//?{query_value}{not_empty_query}{query_key}"
+        defined_url = f"{URL}{query_type}?"
+        if isinstance(query_value, str):
+            defined_url += f"{query_value}{not_empty_query}{query_key}"
+        elif isinstance(query_value, list) and len(query_value) != 0:
+            for key, value in zip(query_key, query_value):
+                defined_url += f"{key}={value}&"
+            defined_url = defined_url[:-1]
+        # print(defined_url)
         return requests.get(defined_url, headers=HEADERS).json()["data"]
-
 
 class Task(Base):
     """class for get requests of task info"""
 
-    def __init__(self, id_for_query: str):
+    def __init__(self, id_for_query: Optional[str] = None, task_date: Optional[Dict[Any, Any]] = None):
         """get info by request"""
-        returned_info = self.request("machine_tasks", "id", id_for_query)[0]
+        if not id_for_query and not task_date:
+            raise AttributeError('sdfs')
 
+        returned_info = task_date or self.request("machine_tasks", "id", id_for_query)[0]
+
+        self.task_id = id_for_query
         self.machine_id = returned_info.get("machine_id")
         self.driver_id = returned_info.get("driver_id")
         self.work_type_id = returned_info.get("work_type_id")
         self.implement_id = returned_info.get("implement_id")
+        self.fuel_consumption = returned_info.get("fuel_consumption")
+        self.covered_area = returned_info.get("covered_area")
+        self.work_distance = round(returned_info.get("work_distance"), 2) / 1000
+        self.road_distance = round(returned_info.get("total_distance") - self.work_distance, 2)
+        self.road_distance = self.road_distance / 1000 if self.road_distance >= 10000 else 0
+        start_time = datetime.fromisoformat(returned_info.get("start_time"))
+        end_time = datetime.fromisoformat(returned_info.get("end_time"))
 
+        day = time(6, 00)
+        night = time(22, 00)
+        self.day_shift, self.night_shift = 0, 0
+        
+        while (start_time + timedelta(hours=1)) <= end_time:
+            if night >= (start_time + timedelta(hours=1)).time() > day:
+                self.day_shift += 1
+            else:
+                self.night_shift += 1
+            start_time += timedelta(hours=1)
+
+        
         self.start = DateText(datetime.fromisoformat(returned_info.get("start_time")))
         self.end = DateText(datetime.fromisoformat(returned_info.get("end_time")))
 
@@ -73,6 +103,13 @@ class Task(Base):
         self.work_type = WorkType(self.work_type_id)
         self.implement = Implement(self.implement_id)
 
+    @classmethod
+    def get_by_day(cls, start_time: datetime):
+        end_time = start_time + timedelta(days=1)
+        returned_info = cls.request("machine_tasks",
+                                    [str(start_time), str(end_time)],
+                                    ["start_time_gt_eq", "start_time_lt_eq"])
+        return tuple(Task(task_date=task_date) for task_date in returned_info)
 
 class Machine(Base):
     """class for get requests of machine info"""
@@ -113,6 +150,21 @@ class Implement(Base):
 
     def __init__(self, id_for_query: str):
         """get info by request"""
-        returned_info = self.request("implements", "id", id_for_query)[0]
-        self.implement_name = returned_info.get("name")
-        self.registration_number = returned_info.get("registration_number")
+        
+        #there is a case when task has not an implement id
+        returned_info = {} if not id_for_query else self.request("implements", "id", id_for_query)[0]
+        self.implement_name = returned_info.get("name") or ""
+        self.registration_number = returned_info.get("registration_number") or ""
+        print(self.registration_number)
+
+# class TaskByDate(Base):
+
+#     """class for getting data filtered by date"""
+#     def __init__(self, date: datetime) -> None:
+#         start_time = date.date()
+#         end_time = date + timedelta(days=1)
+#         end_time = end_time.date()
+#         returned_info = self.request("machine_tasks", [str(start_time), str(end_time)], ["start_time_gt_eq", "start_time_lt_eq"])
+#         self.task_ids = []
+#         for returned in returned_info:
+#             self.task_ids.append(returned["id"])
