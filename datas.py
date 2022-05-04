@@ -8,26 +8,29 @@ import requests
 
 from info import HEADERS, URL
 
-locale.setlocale(locale.LC_ALL, ('ru_RU', 'UTF-8'))
+locale.setlocale(locale.LC_ALL, ("ru_RU", "UTF-8"))
 REGION = {}
 
 
-class DateText():
+class DateText:
     def __init__(self, date: datetime):
         self.date = date
 
     @property
     def time(self):
-        return f'{self.date:%H:%M:%S}'
+        return f"{self.date:%H:%M:%S}"
+
     @property
     def day(self):
-        return f'{self.date:%d}'
+        return f"{self.date:%d}"
+
     @property
     def month(self):
-        return f'{self.date:%B}'
+        return f"{self.date:%B}"
+
     @property
     def year(self):
-        return f'{self.date:%Y}'
+        return f"{self.date:%Y}"
 
 
 def get_region_info(id_for_query):
@@ -60,15 +63,22 @@ class Base:
         # print(defined_url)
         return requests.get(defined_url, headers=HEADERS).json()["data"]
 
+
 class Task(Base):
     """class for get requests of task info"""
 
-    def __init__(self, id_for_query: Optional[str] = None, task_date: Optional[Dict[Any, Any]] = None):
+    def __init__(
+        self,
+        id_for_query: Optional[str] = None,
+        task_date: Optional[Dict[Any, Any]] = None,
+    ):
         """get info by request"""
         if not id_for_query and not task_date:
-            raise AttributeError('sdfs')
+            raise AttributeError("sdfs")
 
-        returned_info = task_date or self.request("machine_tasks", "id", id_for_query)[0]
+        returned_info = (
+            task_date or self.request("machine_tasks", "id", id_for_query)[0]
+        )
 
         self.task_id = id_for_query
         self.machine_id = returned_info.get("machine_id")
@@ -78,15 +88,19 @@ class Task(Base):
         self.fuel_consumption = returned_info.get("fuel_consumption")
         self.covered_area = returned_info.get("covered_area")
         self.work_distance = round(returned_info.get("work_distance"), 2) / 1000
-        self.road_distance = round(returned_info.get("total_distance") - self.work_distance, 2)
-        self.road_distance = self.road_distance / 1000 if self.road_distance >= 10000 else 0
+        self.road_distance = round(
+            returned_info.get("total_distance") - self.work_distance, 2
+        )
+        self.road_distance = (
+            self.road_distance / 1000 if self.road_distance >= 10000 else 0
+        )
         start_time = datetime.fromisoformat(returned_info.get("start_time"))
         end_time = datetime.fromisoformat(returned_info.get("end_time"))
 
         day = time(6, 00)
         night = time(22, 00)
         self.day_shift, self.night_shift = 0, 0
-        
+
         while (start_time + timedelta(hours=1)) <= end_time:
             if night >= (start_time + timedelta(hours=1)).time() > day:
                 self.day_shift += 1
@@ -94,7 +108,6 @@ class Task(Base):
                 self.night_shift += 1
             start_time += timedelta(hours=1)
 
-        
         self.start = DateText(datetime.fromisoformat(returned_info.get("start_time")))
         self.end = DateText(datetime.fromisoformat(returned_info.get("end_time")))
 
@@ -106,10 +119,13 @@ class Task(Base):
     @classmethod
     def get_by_day(cls, start_time: datetime):
         end_time = start_time + timedelta(days=1)
-        returned_info = cls.request("machine_tasks",
-                                    [str(start_time), str(end_time)],
-                                    ["start_time_gt_eq", "start_time_lt_eq"])
+        returned_info = cls.request(
+            "machine_tasks",
+            [str(start_time), str(end_time)],
+            ["start_time_gt_eq", "start_time_lt_eq"],
+        )
         return tuple(Task(task_date=task_date) for task_date in returned_info)
+
 
 class Machine(Base):
     """class for get requests of machine info"""
@@ -131,7 +147,11 @@ class Driver(Base):
     def __init__(self, id_for_query: str):
         """get info by request"""
         returned_info = self.request("users", "id", id_for_query)
-        info = returned_info[0] if returned_info else {"username": '', "additional_info": ''}  # может не быть водителя
+        info = (
+            returned_info[0]
+            if returned_info
+            else {"username": "", "additional_info": ""}
+        )  # может не быть водителя
         self.driver_name = info.get("username")
         self.additional_info = info.get("additional_info")
 
@@ -150,21 +170,13 @@ class Implement(Base):
 
     def __init__(self, id_for_query: str):
         """get info by request"""
-        
-        #there is a case when task has not an implement id
-        returned_info = {} if not id_for_query else self.request("implements", "id", id_for_query)[0]
+
+        # there is a case when task has not an implement id
+        returned_info = (
+            {}
+            if not id_for_query
+            else self.request("implements", "id", id_for_query)[0]
+        )
         self.implement_name = returned_info.get("name") or ""
         self.registration_number = returned_info.get("registration_number") or ""
         print(self.registration_number)
-
-# class TaskByDate(Base):
-
-#     """class for getting data filtered by date"""
-#     def __init__(self, date: datetime) -> None:
-#         start_time = date.date()
-#         end_time = date + timedelta(days=1)
-#         end_time = end_time.date()
-#         returned_info = self.request("machine_tasks", [str(start_time), str(end_time)], ["start_time_gt_eq", "start_time_lt_eq"])
-#         self.task_ids = []
-#         for returned in returned_info:
-#             self.task_ids.append(returned["id"])
