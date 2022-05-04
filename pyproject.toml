@@ -9,6 +9,10 @@ python = "^3.9"
 PySimpleGUI = "^4.59.0"
 openpyxl = "^3.0.9"
 requests = "^2.27.1"
+black = "^22.3.0"
+isort = "^5.10.1"
+pylint = "^2.13.8"
+mypy = "^0.950"
 
 [tool.poetry.dev-dependencies]
 
