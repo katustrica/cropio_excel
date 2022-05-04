@@ -62,6 +62,13 @@ class ExcelInfo:
     work: str
     implement: str
     implement_number: str
+    fuel_consumption: float
+    covered_area: float
+    work_distance: float
+    road_distance: float
+    day_shift: int
+    night_shift: int
+
 
 
 class ExcelFile(ABC):
