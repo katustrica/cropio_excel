@@ -5,7 +5,10 @@ from typing import Optional
 
 from datas import Task
 from excel import ExcelInfo, KamazExcel, WaybillExcel
+from info import DEBUG_LINUX
 
+path_to_save_kamaz = ".\\Путевые листы\\Камазы\\" if not DEBUG_LINUX else 'Путевые листы/Камазы/'
+path_to_save_simple = ".\\Путевые листы\\Обычные\\" if not DEBUG_LINUX else 'Путевые листы/Обычные/'
 
 def create_excels(
     task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
@@ -28,9 +31,9 @@ def create_excels(
             simple_excel_infos.append(excel_info)
 
     if simple_excel_infos:
-        WaybillExcel(simple_excel_infos, path_to_save=".\\Путевые листы\\Обычные\\")
+        WaybillExcel(simple_excel_infos, path_to_save=path_to_save_simple)
     if kamaz_excel_infos:
-        KamazExcel(kamaz_excel_infos, path_to_save=".\\Путевые листы\\Камазы\\")
+        KamazExcel(kamaz_excel_infos, path_to_save=path_to_save_kamaz)
 
 
 def get_excel_infos(
@@ -38,12 +41,13 @@ def get_excel_infos(
 ):
     excel_infos = []
     tasks = []
+    print(period)
     if task_ids and not period:
         tasks = [Task(task_id) for task_id in task_ids]
     elif not task_ids and period:
         tasks = itertools.chain(*[Task.get_by_day(date) for date in period])
     elif not task_ids and not period:
-        raise ValueError("There should be given one and only one argument")
+        raise ValueError("There should be given only one argument")
 
     for task in tasks:
         start, end = task.start, task.end

@@ -82,9 +82,9 @@ while True:  # Event Loop
         sg.PopupOK("Готово")
 
     elif event == "-START_PERIOD-":
-        start_date = datetime.strptime(values["-CALENDAR_START-"], date_format)
-        end_date = datetime.strptime(values["-CALENDAR_END-"], date_format)
-        if end_date > start_date:
+        start_date = datetime.strptime(values["-DATE_START-"], date_format)
+        end_date = datetime.strptime(values["-DATE_END-"], date_format)
+        if end_date <= start_date:
             sg.PopupError("Дата конца промежутка введена неверно. Пожалуйста, укажите дату начала раньше, чем дата конца")
         period_range = []
         while start_date <= end_date:
