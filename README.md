@@ -1,1 +1,1 @@
-pyinstaller .\interface.py --windowed --onefile --add-data="C:\sbis\cropio\def.xlsx;def"
+pyinstaller .\interface.py --windowed --onefile --add-data="C:\sbis\cropio\def_simple.xlsx;def;C:\sbis\cropio\def_kamaz.xlsx;def"

@@ -30,8 +30,8 @@ KAMAZ_CELLS = (
     Cells("driver_info", 0, "P17"),
     Cells("driver_short_1", 0, "CO46"),
     Cells("driver_short_2", 0, "CF52"),
-    Cells("driver_short_3", 1, "DA18"),
-    Cells("work", 0, "U30"),
+    Cells("driver_short_3", 0, "DA74"),
+    Cells("work", 0, "W30"),
     Cells("implement_number", 0, "AR21"),
 )
 

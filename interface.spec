@@ -7,7 +7,10 @@ block_cipher = None
 a = Analysis(['interface.py'],
              pathex=[],
              binaries=[],
-             datas=[('C:\\sbis\\cropio\\def.xlsx', 'def')],
+             datas=[
+                ('C:\\sbis\\cropio\\def_simple.xlsx', 'def'),
+                ('C:\\sbis\\cropio\\def_kamaz.xlsx', 'def')
+             ],
              hiddenimports=[],
              hookspath=[],
              hooksconfig={},
