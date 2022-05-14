@@ -91,7 +91,7 @@ class ExcelFile(ABC):
         raise NotImplemented
 
     def save_file(self, workbook: xl.workbook.Workbook, path_to_save: str):
-        file_name = f'{", ".join(map(str, self.task_ids))}.xlsx' # Название может быть слишком большим
+        file_name = f'{", ".join(map(str, self.task_ids))}.xlsx'  # Название может быть слишком большим
         path = f"{path_to_save}{file_name}"
         pathlib.Path(path_to_save).mkdir(parents=True, exist_ok=True)
         # workbook.security = WorkbookProtection(workbookPassword='imax', lockStructure=True)

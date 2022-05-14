@@ -1,8 +1,9 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
+
 import PySimpleGUI as sg
 
-from main import create_excels
 from info import date_format
+from main import create_excels
 
 sg.theme("Tan")
 task_id_table = [
@@ -31,22 +32,49 @@ layout_list = [
 
 layout_period = [
     [sg.Text("Выберите начало промежутка")],
-    [sg.Input(key='-DATE_START-', size=(20, 1), readonly=True), sg.CalendarButton('Дата', close_when_date_chosen=False, key='-CALENDAR_START-', format=date_format)],
+    [
+        sg.Input(key="-DATE_START-", size=(20, 1), readonly=True),
+        sg.CalendarButton(
+            "Дата",
+            close_when_date_chosen=False,
+            key="-CALENDAR_START-",
+            format=date_format,
+        ),
+    ],
     [sg.Text("Выберите конец промежутка")],
-    [sg.Input(key='-DATE_END-', size=(20, 1), readonly=True), sg.CalendarButton('Дата', close_when_date_chosen=False, key='-CALENDAR_END-', format=date_format)],
-    [sg.Button("Сделать таблицу", size=(39, 1), key="-START_PERIOD-",  expand_x=True)],
-            ]
+    [
+        sg.Input(key="-DATE_END-", size=(20, 1), readonly=True),
+        sg.CalendarButton(
+            "Дата",
+            close_when_date_chosen=False,
+            key="-CALENDAR_END-",
+            format=date_format,
+        ),
+    ],
+    [sg.Button("Сделать таблицу", size=(39, 1), key="-START_PERIOD-", expand_x=True)],
+]
 
 layuot_date = [
     [sg.Text("Выберите день")],
-    [sg.Input(key='-DATE_ONLY_DAY-', size=(20, 1), readonly=True), sg.CalendarButton('Дата', close_when_date_chosen=False, key='-CALENDAR_ONLY_DAY-', format=date_format)],
-    [sg.Button("Сделать таблицу", size=(39, 1), key="-START_DAY-",  expand_x=True)],
+    [
+        sg.Input(key="-DATE_ONLY_DAY-", size=(20, 1), readonly=True),
+        sg.CalendarButton(
+            "Дата",
+            close_when_date_chosen=False,
+            key="-CALENDAR_ONLY_DAY-",
+            format=date_format,
+        ),
+    ],
+    [sg.Button("Сделать таблицу", size=(39, 1), key="-START_DAY-", expand_x=True)],
 ]
 
 layuot = [
-    [sg.TabGroup([
-        [sg.Tab('Список заданий', layout_list), sg.Tab('Период', layout_period), sg.Tab("День", layuot_date)]
-        ])
+    [
+        sg.TabGroup(
+            [
+                [sg.Tab("Список заданий", layout_list), sg.Tab("Период", layout_period), sg.Tab("День", layuot_date),]
+            ]
+        )
     ]
 ]
 
@@ -85,7 +113,9 @@ while True:  # Event Loop
         start_date = datetime.strptime(values["-DATE_START-"], date_format)
         end_date = datetime.strptime(values["-DATE_END-"], date_format)
         if end_date <= start_date:
-            sg.PopupError("Дата конца промежутка введена неверно. Пожалуйста, укажите дату начала раньше, чем дата конца")
+            sg.PopupError(
+                "Дата конца промежутка введена неверно. Пожалуйста, укажите дату начала раньше, чем дата конца"
+            )
         period_range = []
         while start_date <= end_date:
             period_range.append(start_date)
@@ -95,7 +125,9 @@ while True:  # Event Loop
         sg.PopupOK("Готово")
 
     elif event == "-START_DAY-":
-        create_excels(period=[datetime.strptime(values["-DATE_ONLY_DAY-"], date_format)])
+        create_excels(
+            period=[datetime.strptime(values["-DATE_ONLY_DAY-"], date_format)]
+        )
         sg.PopupOK("Готово")
 
     elif event == "-CALENDAR_START-":
@@ -103,7 +135,7 @@ while True:  # Event Loop
 
     elif event == "-CALENDAR_END-":
         window["-DATE_END-"].update(values["-CALENDAR_END-"])
-    
+
     elif event == "-CALENDAR_ONLY_DAY-":
         window["-DATE_ONLY_DAY-"].update(values["-CALENDAR_ONLY_DAY-"])
 window.close()

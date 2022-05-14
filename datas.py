@@ -1,9 +1,9 @@
 """for requests"""
 
 import locale
+import warnings
 from datetime import datetime, time, timedelta
 from typing import Any, Dict, Optional, Union
-import warnings
 
 import requests
 
@@ -53,7 +53,9 @@ class Base:
         query_filter: dict[str, list],
         not_empty_query: str = "=",
     ):
-        defined_url = f"{URL}{query_type}?" + "&".join([f"{key}{not_empty_query}{value}" for key, value in query_filter.items()])
+        defined_url = f"{URL}{query_type}?" + "&".join(
+            [f"{key}{not_empty_query}{value}" for key, value in query_filter.items()]
+        )
         # if isinstance(query_value, str):
         #     defined_url += f"{query_value}{not_empty_query}{query_key}"
         # elif isinstance(query_value, list) and len(query_value) != 0:
@@ -122,8 +124,7 @@ class Task(Base):
         end_time = start_time + timedelta(days=1)
         returned_info = cls.request(
             "machine_tasks",
-            {"start_time_gt_eq": str(start_time), 
-            "start_time_lt_eq": str(end_time)},
+            {"start_time_gt_eq": str(start_time), "start_time_lt_eq": str(end_time)},
         )
         return tuple(Task(task_data=task_data) for task_data in returned_info)
 

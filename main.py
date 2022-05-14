@@ -1,6 +1,6 @@
 """ Создание файлов """
-from datetime import datetime
 import itertools
+from datetime import datetime
 from typing import Optional
 
 from datas import Task
