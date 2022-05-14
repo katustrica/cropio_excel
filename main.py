@@ -1,14 +1,17 @@
 """ Создание файлов """
 from datetime import datetime
+import itertools
 from typing import Optional
 
 from datas import Task
 from excel import ExcelInfo, KamazExcel, WaybillExcel
 
 
-def create_excels(task_ids: list[int]):
+def create_excels(
+    task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
+):
     """Создать файлы"""
-    excel_infos = get_excel_infos(task_ids)
+    excel_infos = get_excel_infos(task_ids=task_ids, period=period)
     simple_excel_infos, kamaz_excel_infos = [], []
     for excel_info in excel_infos:
         is_kamaz = next(
@@ -31,14 +34,16 @@ def create_excels(task_ids: list[int]):
 
 
 def get_excel_infos(
-    task_ids: Optional[list[int]] = None, date: Optional[datetime] = None
+    task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
 ):
     excel_infos = []
     tasks = []
-    if task_ids and not date:
+    if task_ids and not period:
         tasks = [Task(task_id) for task_id in task_ids]
-    elif not task_ids and date:
-        tasks = Task.get_by_day(date)
+    elif not task_ids and period:
+        tasks = itertools.chain(*[Task.get_by_day(date) for date in period])
+    elif not task_ids and not period:
+        raise ValueError("There should be given one and only one argument")
 
     for task in tasks:
         start, end = task.start, task.end

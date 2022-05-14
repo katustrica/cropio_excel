@@ -1,5 +1,6 @@
 /.idea
 test.py
+./Путевые листы
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -60,7 +60,6 @@ class Base:
             for key, value in zip(query_key, query_value):
                 defined_url += f"{key}={value}&"
             defined_url = defined_url[:-1]
-        # print(defined_url)
         return requests.get(defined_url, headers=HEADERS).json()["data"]
 
 
@@ -179,4 +178,3 @@ class Implement(Base):
         )
         self.implement_name = returned_info.get("name") or ""
         self.registration_number = returned_info.get("registration_number") or ""
-        print(self.registration_number)
