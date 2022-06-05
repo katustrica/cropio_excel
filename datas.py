@@ -3,6 +3,7 @@
 import locale
 import warnings
 from datetime import datetime, time, timedelta
+from functools import cache
 from typing import Any, Dict, Optional, Union
 
 import requests
@@ -10,8 +11,9 @@ import requests
 from info import HEADERS, URL
 
 locale.setlocale(locale.LC_ALL, ("ru_RU", "UTF-8"))
+TRANSFER_WORK_TYPE = 4
+year = 2022
 REGION = {}
-
 
 class DateText:
     def __init__(self, date: datetime):
@@ -50,7 +52,7 @@ class Base:
     @staticmethod
     def request(
         query_type: str,
-        query_filter: dict[str, list],
+        query_filter: dict[str, str|int],
         not_empty_query: str = "=",
     ):
         defined_url = f"{URL}{query_type}?" + "&".join(
@@ -90,13 +92,7 @@ class Task(Base):
         self.implement_id = returned_info.get("implement_id")
         self.fuel_consumption = returned_info.get("fuel_consumption")
         self.covered_area = returned_info.get("covered_area")
-        self.work_distance = round(returned_info.get("work_distance"), 2) / 1000
-        self.road_distance = round(
-            returned_info.get("total_distance") - self.work_distance, 2
-        )
-        self.road_distance = (
-            self.road_distance / 1000 if self.road_distance >= 10000 else 0
-        )
+
         start_time = datetime.fromisoformat(returned_info.get("start_time"))
         end_time = datetime.fromisoformat(returned_info.get("end_time"))
 
@@ -118,6 +114,14 @@ class Task(Base):
         self.driver = Driver(self.driver_id)
         self.work_type = WorkType(self.work_type_id)
         self.implement = Implement(self.implement_id)
+        work_distance = returned_info.get("work_distance")
+        road_distance = returned_info.get("total_distance") - work_distance
+
+
+        self.road_distance = round(
+            road_distance / 1000 if road_distance >= 10000 or self.work_type.is_transfer else 0, 2
+        )
+        self.work_distance = round(work_distance/1000, 2)
 
     @classmethod
     def get_by_day(cls, start_time: datetime):
@@ -127,6 +131,28 @@ class Task(Base):
             {"start_time_gt_eq": str(start_time), "start_time_lt_eq": str(end_time)},
         )
         return tuple(Task(task_data=task_data) for task_data in returned_info)
+
+
+class PlanTask(Task):
+    """ Класс заданий для составления плана с информацией о полях """
+    def __init__(
+        self,
+        id_for_query: Optional[str] = None,
+        task_data: Optional[Dict[Any, Any]] = None,
+    ):
+        """get info by request"""
+        super().__init__(id_for_query, task_data)
+        self.task_field_mapping_list = TaskFieldMapping.get_from_task_id(self.task_id)
+
+
+    @classmethod
+    def get_by_day(cls, start_time: datetime):
+        end_time = start_time + timedelta(days=1)
+        returned_info = cls.request(
+            "machine_tasks",
+            {"start_time_gt_eq": str(start_time), "start_time_lt_eq": str(end_time)},
+        )
+        return tuple(PlanTask(task_data=task_data) for task_data in returned_info)
 
 
 class Machine(Base):
@@ -165,6 +191,7 @@ class WorkType(Base):
         """get info by request"""
         returned_info = self.request("work_types", {"id": id_for_query})[0]
         self.work_type_name = returned_info.get("name")
+        self.is_transfer = returned_info.get("work_type_group_id") == TRANSFER_WORK_TYPE
 
 
 class Implement(Base):
@@ -181,3 +208,65 @@ class Implement(Base):
         )
         self.implement_name = returned_info.get("name") or ""
         self.registration_number = returned_info.get("registration_number") or ""
+
+
+class TaskFieldMapping(Base):
+    """class for get requests of implement info"""
+
+    def __init__(self, field_id_work: dict[str, str | int | float]):
+        """get info by request"""
+        field_id = field_id_work['field_id']
+        field = Field(field_id)
+
+        self.name = field.name
+        self.crop_name = field.crop_name
+        self.area = field.area
+        self.work_area = round(field_id_work.get('covered_area', 0), 2)
+
+    @classmethod
+    def get_from_task_id(cls, task_id: str, is_transfer: bool = False) -> tuple['TaskFieldMapping']:
+        """ Получить список планов по ид таски """
+        task_field_mapping = cls.request("machine_task_field_mapping_items", {"machine_task_id": task_id})
+        return tuple(
+            TaskFieldMapping(info) for info in task_field_mapping if info.get('covered_area') or is_transfer
+        )
+
+
+class Field(Base):
+    """class for get requests of implement info"""
+
+    def __init__(self, id: str):
+        """get info by request"""
+        field_info = self.request("fields", {"id": id})[0]
+        self.id = id
+        self.name = field_info['name']
+        self.area = field_info['legal_area']
+
+        crop_id = HistoryItems.get_crop_id(id , year)
+        self.crop_name = Crop.get_name(crop_id)
+
+
+class HistoryItems(Base):
+    """class for get requests of implement info"""
+
+    def __init__(self, field_id: str, year: str):
+        """get info by request"""
+        self.crop_id = self.request("history_items", {"field_id": field_id, "year": year})[0]['crop_id']
+
+    @classmethod
+    @cache
+    def get_crop_id(cls, field_id: str, year: str) -> str:
+        return HistoryItems(field_id, year).crop_id
+
+
+class Crop(Base):
+    """class for get requests of implement info"""
+
+    def __init__(self, id: str):
+        """get info by request"""
+        self.name = self.request("crops", {"id": id})[0]['name']
+
+    @classmethod
+    @cache
+    def get_name(cls, id: str) -> str:
+        return Crop(id).name
