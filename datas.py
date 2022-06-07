@@ -58,12 +58,7 @@ class Base:
         defined_url = f"{URL}{query_type}?" + "&".join(
             [f"{key}{not_empty_query}{value}" for key, value in query_filter.items()]
         )
-        # if isinstance(query_value, str):
-        #     defined_url += f"{query_value}{not_empty_query}{query_key}"
-        # elif isinstance(query_value, list) and len(query_value) != 0:
-        # for key, value in zip(query_key, query_value):
-        #     defined_url += f"{key}={value}&"
-        # defined_url = defined_url[:-1]
+
         return requests.get(defined_url, headers=HEADERS).json()["data"]
 
 
@@ -118,10 +113,8 @@ class Task(Base):
         road_distance = returned_info.get("total_distance") - work_distance
 
 
-        self.road_distance = round(
-            road_distance / 1000 if road_distance >= 10000 or self.work_type.is_transfer else 0, 2
-        )
-        self.work_distance = round(work_distance/1000, 2)
+        self.road_distance = round(road_distance / 1000 if road_distance >= 10000 or self.work_type.is_transfer else 0)
+        self.work_distance = round(work_distance/1000)
 
     @classmethod
     def get_by_day(cls, start_time: datetime):
@@ -221,14 +214,14 @@ class TaskFieldMapping(Base):
         self.name = field.name
         self.crop_name = field.crop_name
         self.area = field.area
-        self.work_area = round(field_id_work.get('covered_area', 0), 2)
+        self.work_area = round(field_id_work.get('covered_area', 0))
 
     @classmethod
     def get_from_task_id(cls, task_id: str, is_transfer: bool = False) -> tuple['TaskFieldMapping']:
         """ Получить список планов по ид таски """
         task_field_mapping = cls.request("machine_task_field_mapping_items", {"machine_task_id": task_id})
         return tuple(
-            TaskFieldMapping(info) for info in task_field_mapping if info.get('covered_area') or is_transfer
+            TaskFieldMapping(info) for info in task_field_mapping if info.get('covered_area') >= 1 or is_transfer
         )
 
 
