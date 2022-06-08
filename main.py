@@ -134,7 +134,16 @@ def get_production_excel_infos(task_ids: Optional[list[int]] = None, period: Opt
                 crop_name='',
                 field_area='',
                 field_work_area='',
-                is_transfer=True
+                unit='Км',
+                day_covered_hour='',
+                night_covered_hour='',
+                day_covered_work='',
+                night_covered_work='',
+                day_distance_hour=task.day_distance_hour,
+                night_distance_hour=task.night_distance_hour,
+                day_distance_work=task.day_distance_work,
+                night_distance_work=task.night_distance_work,
+                is_transfer=True,
             )
             excel_infos_by_region[region].append(excel_info)
             continue
@@ -168,6 +177,15 @@ def get_production_excel_infos(task_ids: Optional[list[int]] = None, period: Opt
                 crop_name=task_field_mapping.crop_name,
                 field_area=task_field_mapping.area,
                 field_work_area=task_field_mapping.work_area,
+                unit='Га',
+                day_covered_hour=task_field_mapping.day_covered_hour,
+                night_covered_hour=task_field_mapping.night_covered_hour,
+                day_covered_work=task_field_mapping.day_covered_work,
+                night_covered_work=task_field_mapping.night_covered_work,
+                day_distance_hour=task_field_mapping.day_distance_hour,
+                night_distance_hour=task_field_mapping.night_distance_hour,
+                day_distance_work=task_field_mapping.day_distance_work,
+                night_distance_work=task_field_mapping.night_distance_work,
             )
             excel_infos_by_region[region].append(excel_info)
     return excel_infos_by_region

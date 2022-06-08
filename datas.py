@@ -112,9 +112,29 @@ class Task(Base):
         work_distance = returned_info.get("work_distance")
         road_distance = returned_info.get("total_distance") - work_distance
 
+        if self.work_type.is_transfer:
+            distance_hourly = {int(info[0][10:13]): info[1] for info in returned_info.get('total_distance_hourly')}
+            self.day_distance_hour = 0
+            self.night_distance_hour = 0
+            day_distance_work = 0
+            night_distance_work = 0
+            for hour, work in distance_hourly.items():
+                if 6 <= hour < 22:
+                    self.day_distance_hour += 1
+                    day_distance_work += work
+                else:
+                    self.night_distance_hour += 1
+                    night_distance_work += work
+            self.day_distance_work = round(day_distance_work / 1000)
+            self.night_distance_work = round(night_distance_work / 1000)
+        else:
+            self.day_distance_hour = 0
+            self.night_distance_hour = 0
+            self.day_distance_work = 0
+            self.night_distance_work = 0
 
-        self.road_distance = round(road_distance / 1000 if road_distance >= 10000 or self.work_type.is_transfer else 0)
         self.work_distance = round(work_distance/1000)
+        self.road_distance = round(road_distance / 1000 if road_distance >= 10000 or self.work_type.is_transfer else 0)
 
     @classmethod
     def get_by_day(cls, start_time: datetime):
@@ -135,7 +155,7 @@ class PlanTask(Task):
     ):
         """get info by request"""
         super().__init__(id_for_query, task_data)
-        self.task_field_mapping_list = TaskFieldMapping.get_from_task_id(self.task_id)
+        self.task_field_mapping_list = TaskFieldMapping.get_from_task_id(self.task_id, self.work_type.is_transfer)
 
 
     @classmethod
@@ -215,6 +235,39 @@ class TaskFieldMapping(Base):
         self.crop_name = field.crop_name
         self.area = field.area
         self.work_area = round(field_id_work.get('covered_area', 0))
+
+        distance_hourly = {int(info[0][10:13]): info[1] for info in field_id_work.get('work_distance_hourly')}
+        self.day_distance_hour = 0
+        self.night_distance_hour = 0
+        day_distance_work = 0
+        night_distance_work = 0
+        for hour, work in distance_hourly.items():
+            if 6 <= hour < 22:
+                self.day_distance_hour += 1
+                day_distance_work += work
+            else:
+                self.night_distance_hour += 1
+                night_distance_work += work
+        # self.day_distance_work = round(day_distance_work / 1000)
+        # self.night_distance_work = round(night_distance_work / 1000)
+        self.day_distance_work = ''
+        self.night_distance_work = ''
+
+        covered_area_hourly = {int(info[0][10:13]): info[1] for info in field_id_work.get('covered_area_hourly')}
+        self.day_covered_hour = 0
+        self.night_covered_hour = 0
+        day_covered_work = 0
+        night_covered_work = 0
+        for hour, work in covered_area_hourly.items():
+            if 6 <= hour < 22:
+                self.day_covered_hour += 1
+                day_covered_work += work
+            else:
+                self.night_covered_hour += 1
+                night_covered_work += work
+        self.day_covered_work = round(day_covered_work)
+        self.night_covered_work = round(night_covered_work)
+
 
     @classmethod
     def get_from_task_id(cls, task_id: str, is_transfer: bool = False) -> tuple['TaskFieldMapping']:

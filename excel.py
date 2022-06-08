@@ -44,14 +44,27 @@ PRODUCTION_CELLS = (
     ProductionCells("field_name", 0, 'C', 2),
     ProductionCells("field_area", 0, 'D', 2),
     ProductionCells("work", 0, 'E', 2),
+    ProductionCells("unit", 0, 'F', 2),
     ProductionCells("machine_name", 0, 'G', 2),
     ProductionCells("implement", 0, 'H', 2),
     ProductionCells("driver", 0, 'J', 2),
-    ProductionCells("field_work_area", 0, 'K', 2),
-    ProductionCells("road_distance", 0, 'L', 2),
-    # ProductionCells("day_shift", 0, 'M', 2),
-    # ProductionCells("night_shift", 0, 'N', 2),
-    ProductionCells("task", 0, 'M', 2),
+
+    ProductionCells("day_shift", 0, 'K', 2),
+    ProductionCells("night_shift", 0, 'L', 2),
+
+    ProductionCells("field_work_area", 0, 'M', 2),
+    ProductionCells("day_covered_work", 0, 'N', 2),
+    ProductionCells("night_covered_work", 0, 'O', 2),
+    ProductionCells("day_covered_hour", 0, 'P', 2),
+    ProductionCells("night_covered_hour", 0, 'Q', 2),
+
+    ProductionCells("road_distance", 0, 'R', 2),
+    ProductionCells("day_distance_work", 0, 'S', 2),
+    ProductionCells("night_distance_work", 0, 'T', 2),
+    ProductionCells("day_distance_hour", 0, 'U', 2),
+    ProductionCells("night_distance_hour", 0, 'V', 2),
+
+    ProductionCells("task", 0, 'W', 2),
 )
 PRODUCTION_TASK_CELLS = (
     ProductionCells("task", 0, 'A', 3),
@@ -111,6 +124,15 @@ class ExcelProductionInfo(ExcelInfo):
     crop_name: str
     field_area: float
     field_work_area: float
+    unit: str
+    day_covered_hour: int
+    night_covered_hour: int
+    day_covered_work: int
+    night_covered_work: int
+    day_distance_hour: int
+    night_distance_hour: int
+    day_distance_work: int
+    night_distance_work: int
     is_transfer: bool = False
 
 
