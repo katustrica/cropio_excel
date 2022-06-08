@@ -6,9 +6,12 @@ from collections import namedtuple
 from dataclasses import dataclass
 
 import openpyxl as xl
+from openpyxl.styles import Alignment, Border, Side, Font
 from openpyxl.workbook.protection import WorkbookProtection
 
 Cells = namedtuple("CELLS", ("name", "page_num", "cell"))
+ProductionCells = namedtuple("PRODUCTIONCELLS", ("name", "page_num", "cell_letter", "start_cell_row"))
+
 SIMPLE_CELLS = (
     Cells("task", 0, "F1"),
     Cells("time", 0, "C2"),
@@ -30,15 +33,45 @@ KAMAZ_CELLS = (
     Cells("driver_info", 0, "P17"),
     Cells("driver_short_1", 0, "CO46"),
     Cells("driver_short_2", 0, "CF52"),
-    Cells("driver_short_3", 1, "DA18"),
-    Cells("work", 0, "U30"),
+    Cells("driver_short_3", 0, "DA74"),
+    Cells("work", 0, "W30"),
     Cells("implement_number", 0, "AR21"),
 )
 
-# FILE_LOCATION_SIMPLE = f'{sys._MEIPASS}/def/def_simple.xlsx'
-# FILE_LOCATION_KAMAZ = f'{sys._MEIPASS}/def/def_kamaz.xlsx'
-FILE_LOCATION_SIMPLE = f"def_simple.xlsx"
-FILE_LOCATION_KAMAZ = f"def_kamaz.xlsx"
+PRODUCTION_CELLS = (
+    ProductionCells("date", 0, 'A', 2),
+    ProductionCells("crop_name", 0, 'B', 2),
+    ProductionCells("field_name", 0, 'C', 2),
+    ProductionCells("field_area", 0, 'D', 2),
+    ProductionCells("work", 0, 'E', 2),
+    ProductionCells("machine_name", 0, 'G', 2),
+    ProductionCells("implement", 0, 'H', 2),
+    ProductionCells("driver", 0, 'J', 2),
+    ProductionCells("field_work_area", 0, 'K', 2),
+    ProductionCells("road_distance", 0, 'L', 2),
+    # ProductionCells("day_shift", 0, 'M', 2),
+    # ProductionCells("night_shift", 0, 'N', 2),
+    ProductionCells("task", 0, 'M', 2),
+)
+PRODUCTION_TASK_CELLS = (
+    ProductionCells("task", 0, 'A', 3),
+    ProductionCells("date", 0, 'B', 3),
+    ProductionCells("driver", 0, 'C', 3),
+    ProductionCells("machine_name", 0, 'E', 3),
+    ProductionCells("machine_number", 0, 'F', 3),
+)
+
+FILE_LOCATION_SIMPLE = f'{sys._MEIPASS}/def/def_simple.xlsx'
+FILE_LOCATION_KAMAZ = f'{sys._MEIPASS}/def/def_kamaz.xlsx'
+FILE_LOCATION_PRODUCTION = f"{sys._MEIPASS}/def/def_production.xlsx"
+# FILE_LOCATION_SIMPLE = f"def_simple.xlsx"
+# FILE_LOCATION_KAMAZ = f"def_kamaz.xlsx"
+# FILE_LOCATION_PRODUCTION = f"def_production.xlsx"
+
+thin = Side(border_style="thin", color="000000")
+alignment = Alignment(horizontal="center", vertical="center")
+border = Border(top=thin, left=thin, right=thin, bottom=thin)
+font = Font(size=9)
 
 
 @dataclass
@@ -70,8 +103,21 @@ class ExcelInfo:
     night_shift: int
 
 
+@dataclass
+class ExcelProductionInfo(ExcelInfo):
+    """dataclass for storing info about task"""
+
+    field_name: str
+    crop_name: str
+    field_area: float
+    field_work_area: float
+    is_transfer: bool = False
+
+
 class ExcelFile(ABC):
     """Класс для создания файла по полученным данным"""
+
+    name = ''
 
     def __init__(
         self, infos: list[ExcelInfo], file_location: str, path_to_save: str = ".\\"
@@ -91,8 +137,7 @@ class ExcelFile(ABC):
         raise NotImplemented
 
     def save_file(self, workbook: xl.workbook.Workbook, path_to_save: str):
-        file_name = f'{", ".join(map(str, self.task_ids))}.xlsx'  # Название может быть слишком большим
-        path = f"{path_to_save}{file_name}"
+        path = f"{path_to_save}{self.name}.xlsx"
         pathlib.Path(path_to_save).mkdir(parents=True, exist_ok=True)
         # workbook.security = WorkbookProtection(workbookPassword='imax', lockStructure=True)
         try:
@@ -117,6 +162,7 @@ class WaybillExcel(ExcelFile):
     ):
         """Создаем копию дефолтного файла при создании экземпляра"""
         self.cells = SIMPLE_CELLS
+        self.name = 'Отчет по заданиям'
         super().__init__(infos, file_location, path_to_save)
 
     def fill_file(self, workbook: xl.workbook.Workbook):
@@ -153,11 +199,12 @@ class KamazExcel(ExcelFile):
     ):
         """Создаем копию дефолтного файла при создании экземпляра"""
         self.cells = KAMAZ_CELLS
+        self.name = 'Отчет по заданиям КАМАЗ'
         super().__init__(infos, file_location, path_to_save)
 
     def fill_file(self, workbook: xl.workbook.Workbook):
         """Заполнить данными новую excel"""
-        def_worksheets = (workbook["Лист1"], workbook["Лист2"])
+        def_worksheets = (workbook["Лист1"],)
 
         for num_info, info in enumerate(self.infos):
             # Создаем и заполняем новый WorkSheet с именем таски
@@ -165,7 +212,7 @@ class KamazExcel(ExcelFile):
                 workbook.copy_worksheet(sheet) for sheet in def_worksheets
             )
             for num, sheet in enumerate(worksheets):
-                sheet.title = f"{info.task} стр. {num+1}"
+                sheet.title = f"{info.task}"
 
             for name, sheet_num, pos in self.cells:
                 if "driver_short" in name:
@@ -182,3 +229,88 @@ class KamazExcel(ExcelFile):
         # Удаляем дефолтные страницы
         for sheet in def_worksheets:
             workbook.remove(sheet)
+
+
+class ProductionExcel(ExcelFile):
+    """Класс для создания файла для списка путевых листов по полученным данным"""
+
+    def __init__(
+        self,
+        excel_infos_by_region: dict[str, ExcelProductionInfo],
+        file_location: str = FILE_LOCATION_PRODUCTION,
+        path_to_save: str = ".\\",
+    ):
+        """Создаем копию дефолтного файла при создании экземпляра"""
+        self.cells = PRODUCTION_CELLS
+        self.task_cells = PRODUCTION_TASK_CELLS
+        self.name = 'Выработка'
+        super().__init__(excel_infos_by_region, file_location, path_to_save)
+
+    def fill_file(self, workbook: xl.workbook.Workbook):
+        """Заполнить данными новую excel"""
+        def_worksheet_production = workbook["Выработка"]
+        def_worksheet_waybill_list = workbook["Журнал ПЛ"]
+        for num_info, (region, infos) in enumerate(self.infos.items()):
+            # Создаем и заполняем новый WorkSheet с именем таски
+            worksheet = workbook.copy_worksheet(def_worksheet_production)
+            region_name = region.removeprefix('ООО').replace('"', '').strip()
+            title = worksheet.title.replace('Copy', '')
+            worksheet.title = f"{title} - {region_name}"
+
+            row_number = 0
+            for info in infos:
+
+                for name, page_num, cell_letter, start_cell_row in self.cells:
+
+                    if "date" == name:
+                        if info.driver:
+                            value = f"{info.start_day}.{info.start_month}.{info.start_year}"
+                        else:
+                            value = ""
+                    else:
+                        value = getattr(info, name)
+
+                    if value:
+                        pos = f'{cell_letter}{start_cell_row+row_number}'
+                        cell = worksheet[pos]
+                        cell.value = value
+                        cell.alignment = alignment
+                        cell.border = border
+                        cell.font = font
+                row_number += 1
+
+        task_ids_done = []
+        for num_info, (region, infos) in enumerate(self.infos.items()):
+            # Создаем и заполняем новый WorkSheet с именем таски
+            worksheet = workbook.copy_worksheet(def_worksheet_waybill_list)
+            region_name = region.removeprefix('ООО').replace('"', '').strip()
+            title = worksheet.title.replace('Copy', '')
+            worksheet.title = f"{title} - {region_name}"
+
+            row_number = 0
+            for info in infos:
+                if info.task in task_ids_done:
+                    continue
+                for name, page_num, cell_letter, start_cell_row in self.task_cells:
+                    if "date" == name:
+                        if info.driver:
+                            value = f"{info.start_day}.{info.start_month}.{info.start_year}"
+                        else:
+                            value = ""
+                    else:
+                        value = getattr(info, name)
+
+                    if value:
+                        pos = f'{cell_letter}{start_cell_row+row_number}'
+                        cell = worksheet[pos]
+                        cell.value = value
+                        cell.alignment = alignment
+                        cell.border = border
+                        cell.font = font
+                row_number += 1
+                task_ids_done.append(info.task)
+
+        # Удаляем дефолтные страницы
+        for sheet in (def_worksheet_production, def_worksheet_waybill_list):
+            workbook.remove(sheet)
+

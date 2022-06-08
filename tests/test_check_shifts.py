@@ -1,7 +1,7 @@
 from datetime import datetime, time, timedelta
 from unittest import TestCase
 
-from main import create_excels, get_excel_infos
+from main import create_waybill_excels, get_waybill_excel_infos, create_production_excels
 
 
 def shifts(start_time: datetime, end_time: datetime):
@@ -20,34 +20,34 @@ def shifts(start_time: datetime, end_time: datetime):
 
 class TestDailyShifts(TestCase):
     def test_only_day_shift(self):
-        info_result = get_excel_infos([8017])[0]
+        info_result = get_waybill_excel_infos([8017])[0]
         self.assertEqual(info_result.day_shift, 8)
         self.assertEqual(info_result.night_shift, 0)
 
     def test_only_day_shift2(self):
-        info_result = get_excel_infos([9205])[0]
+        info_result = get_waybill_excel_infos([9205])[0]
         self.assertEqual(info_result.day_shift, 12)
         self.assertEqual(info_result.night_shift, 0)
 
 
 class TestNightShifts(TestCase):
     def test_day_and_night_shift1(self):
-        info_result = get_excel_infos([9247])[0]
+        info_result = get_waybill_excel_infos([9247])[0]
         self.assertEqual(info_result.day_shift, 16)
         self.assertEqual(info_result.night_shift, 1)
 
     def test_day_and_night_shift2(self):
-        info_result = get_excel_infos([9222])[0]
+        info_result = get_waybill_excel_infos([9222])[0]
         self.assertEqual(info_result.day_shift, 8)
         self.assertEqual(info_result.night_shift, 3)
 
     def test_day_and_night_shift3(self):
-        info_result = get_excel_infos([9223])[0]
+        info_result = get_waybill_excel_infos([9223])[0]
         self.assertEqual(info_result.day_shift, 8)
         self.assertEqual(info_result.night_shift, 3)
 
     def test_day_and_night_shift4(self):
-        info_result = get_excel_infos([9200])[0]
+        info_result = get_waybill_excel_infos([9200])[0]
         self.assertEqual(info_result.day_shift, 4)
         self.assertEqual(info_result.night_shift, 8)
 
@@ -61,7 +61,7 @@ class TestNightShifts(TestCase):
 
 class TestRoundedShifts(TestCase):
     def test_rounded_shift(self):
-        info_result = get_excel_infos([9111])[0]
+        info_result = get_waybill_excel_infos([9111])[0]
         self.assertEqual(info_result.day_shift, 4)
         self.assertEqual(info_result.night_shift, 8)
 
@@ -71,3 +71,9 @@ class TestRoundedShifts(TestCase):
         )
         self.assertEqual(day_shift, 5)
         self.assertEqual(night_shift, 1)
+
+
+class TestProduction(TestCase):
+    def test_production(self):
+        info_result = create_production_excels([9358, 11009])
+
