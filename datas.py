@@ -1,5 +1,6 @@
 """for requests"""
 
+from email import header
 import locale
 import warnings
 from datetime import datetime, time, timedelta
@@ -7,7 +8,7 @@ from functools import cache
 from typing import Any, Dict, Optional, Union
 
 import requests
-
+import aiohttp
 from info import HEADERS, URL
 
 locale.setlocale(locale.LC_ALL, ("ru_RU", "UTF-8"))
@@ -36,14 +37,14 @@ class DateText:
         return f"{self.date:%Y}"
 
 
-def get_region_info(id_for_query):
-    global region
+async def get_region_info(id_for_query, session: Optional[aiohttp.ClientSession] = None):
+    global REGION
     if id_for_query not in REGION:
-        returned_region_info = Base().request("machine_regions", {"": ""}, "")
-        region = {
+        returned_region_info = await Base.arequest("machine_regions", {"": ""}, "", session=session)
+        REGION = {
             responses["id"]: responses["name"] for responses in returned_region_info
         }
-    return region[id_for_query]
+    return REGION[id_for_query]
 
 
 class Base:
@@ -52,7 +53,7 @@ class Base:
     @staticmethod
     def request(
         query_type: str,
-        query_filter: dict[str, str|int],
+        query_filter: dict[str, Union[str, int]],
         not_empty_query: str = "=",
     ):
         defined_url = f"{URL}{query_type}?" + "&".join(
@@ -61,25 +62,40 @@ class Base:
 
         return requests.get(defined_url, headers=HEADERS).json()["data"]
 
+    @staticmethod
+    async def arequest(
+        query_type: str,
+        query_filter: dict[str, Union[str, int]],
+        not_empty_query: str = "=",
+        session: Optional[aiohttp.ClientSession] = None
+    ):
+        async with session.get(URL+query_type, params=query_filter, headers=HEADERS) as response:
+            # print(response.url)
+            return (await response.json())["data"]
+
+
 
 class Task(Base):
     """class for get requests of task info"""
 
-    def __init__(
-        self,
+    @classmethod
+    async def construct(
+        cls,
         id_for_query: Optional[str] = None,
         task_data: Optional[Dict[Any, Any]] = None,
+        session: Optional[aiohttp.ClientSession] = None
     ):
         """get info by request"""
+        self = cls()
         if not id_for_query and not task_data:
             raise AttributeError("There should be only one argument")
         elif id_for_query and task_data:
             warnings.warn("There should be one argument at most")
 
         returned_info = (
-            task_data or self.request("machine_tasks", {"id": id_for_query})[0]
+            task_data or (await self.arequest("machine_tasks", {"id": id_for_query}, session=session))[0]
         )
-
+        # print(returned_info.get("implement_id"))
         self.task_id = returned_info.get("id")
         self.machine_id = returned_info.get("machine_id")
         self.driver_id = returned_info.get("driver_id")
@@ -105,10 +121,10 @@ class Task(Base):
         self.start = DateText(datetime.fromisoformat(returned_info.get("start_time")))
         self.end = DateText(datetime.fromisoformat(returned_info.get("end_time")))
 
-        self.machine = Machine(self.machine_id)
-        self.driver = Driver(self.driver_id)
-        self.work_type = WorkType(self.work_type_id)
-        self.implement = Implement(self.implement_id)
+        self.machine = await Machine.construct(self.machine_id, session=session)
+        self.driver = await Driver.construct(self.driver_id, session=session)
+        self.work_type = await WorkType.construct(self.work_type_id, session=session)
+        self.implement = await Implement.construct(self.implement_id, session=session)
         work_distance = returned_info.get("work_distance")
         road_distance = returned_info.get("total_distance") - work_distance
 
@@ -116,14 +132,17 @@ class Task(Base):
         self.road_distance = round(road_distance / 1000 if road_distance >= 10000 or self.work_type.is_transfer else 0)
         self.work_distance = round(work_distance/1000)
 
+        return self
+
     @classmethod
-    def get_by_day(cls, start_time: datetime):
+    async def get_by_day(cls, start_time: datetime, session: Optional[aiohttp.ClientSession] = None):
         end_time = start_time + timedelta(days=1)
-        returned_info = cls.request(
+        returned_info = await cls.arequest(
             "machine_tasks",
             {"start_time_gt_eq": str(start_time), "start_time_lt_eq": str(end_time)},
+            session=session,
         )
-        return tuple(Task(task_data=task_data) for task_data in returned_info)
+        return tuple(await cls(task_data=task_data, session=session) for task_data in returned_info)
 
 
 class PlanTask(Task):
@@ -151,23 +170,27 @@ class PlanTask(Task):
 class Machine(Base):
     """class for get requests of machine info"""
 
-    def __init__(self, id_for_query: str):
+    @classmethod
+    async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
         """get info by request"""
-        returned_info = self.request("machines", {"id": id_for_query})[0]
+        self = cls()
+        returned_info = (await self.arequest("machines", {"id": id_for_query}, session=session))[0]
         self.name = returned_info.get("name")
         self.number = returned_info.get("registration_number")
-        returned_machines_info = self.request(
-            "machine_region_mapping_items", {"machine_id": id_for_query}
-        )[0]
-        self.region = get_region_info(returned_machines_info["machine_region_id"])
+        returned_machines_info = (await self.arequest(
+            "machine_region_mapping_items", {"machine_id": id_for_query}, session=session
+        ))[0]
+        self.region = await get_region_info(returned_machines_info["machine_region_id"], session=session)
+        return self
 
 
 class Driver(Base):
     """class for get requests of driver info"""
-
-    def __init__(self, id_for_query: str):
+    @classmethod
+    async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
         """get info by request"""
-        returned_info = self.request("users", {"id": id_for_query})
+        self = cls()
+        returned_info = await self.arequest("users", {"id": id_for_query}, session=session)
         info = (
             returned_info[0]
             if returned_info
@@ -175,38 +198,43 @@ class Driver(Base):
         )  # может не быть водителя
         self.driver_name = info.get("username")
         self.additional_info = info.get("additional_info")
+        return self
 
 
 class WorkType(Base):
     """class for get requests of work_type info"""
-
-    def __init__(self, id_for_query: str):
+    @classmethod
+    async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
         """get info by request"""
-        returned_info = self.request("work_types", {"id": id_for_query})[0]
+        self = cls()
+        returned_info = (await self.arequest("work_types", {"id": id_for_query}, session=session))[0]
         self.work_type_name = returned_info.get("name")
         self.is_transfer = returned_info.get("work_type_group_id") == TRANSFER_WORK_TYPE
+        return self
 
 
 class Implement(Base):
     """class for get requests of implement info"""
-
-    def __init__(self, id_for_query: str):
+    @classmethod
+    async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
         """get info by request"""
 
         # there is a case when task has not an implement id
+        self = cls()
         returned_info = (
             {}
             if not id_for_query
-            else self.request("implements", {"id": id_for_query})[0]
+            else (await self.arequest("implements", {"id": id_for_query}, session=session))[0]
         )
         self.implement_name = returned_info.get("name") or ""
         self.registration_number = returned_info.get("registration_number") or ""
+        return self
 
 
 class TaskFieldMapping(Base):
     """class for get requests of implement info"""
 
-    def __init__(self, field_id_work: dict[str, str | int | float]):
+    def __init__(self, field_id_work: dict[str, Union[str, int, float]]):
         """get info by request"""
         field_id = field_id_work['field_id']
         field = Field(field_id)

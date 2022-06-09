@@ -1,6 +1,8 @@
 """ Создание файла по полученным данным """
 import pathlib
+from posixpath import abspath
 import sys
+import os
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from dataclasses import dataclass
@@ -61,9 +63,14 @@ PRODUCTION_TASK_CELLS = (
     ProductionCells("machine_number", 0, 'F', 3),
 )
 
-FILE_LOCATION_SIMPLE = f'{sys._MEIPASS}/def/def_simple.xlsx'
-FILE_LOCATION_KAMAZ = f'{sys._MEIPASS}/def/def_kamaz.xlsx'
-FILE_LOCATION_PRODUCTION = f"{sys._MEIPASS}/def/def_production.xlsx"
+try:
+    abs_path = sys._MEIPASS
+except:
+    abs_path = os.path.abspath(".")
+
+FILE_LOCATION_SIMPLE = f'{abs_path}/def/def_simple.xlsx'
+FILE_LOCATION_KAMAZ = f'{abs_path}/def/def_kamaz.xlsx'
+FILE_LOCATION_PRODUCTION = f"{abs_path}/def/def_production.xlsx"
 # FILE_LOCATION_SIMPLE = f"def_simple.xlsx"
 # FILE_LOCATION_KAMAZ = f"def_kamaz.xlsx"
 # FILE_LOCATION_PRODUCTION = f"def_production.xlsx"

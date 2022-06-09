@@ -3,6 +3,8 @@ import itertools
 from collections import defaultdict
 from datetime import datetime
 from typing import Optional
+import aiohttp
+from async_timeout import asyncio
 
 from datas import Task, PlanTask
 from excel import ExcelInfo, KamazExcel, WaybillExcel, ExcelProductionInfo, ProductionExcel
@@ -38,17 +40,20 @@ def create_waybill_excels(
         KamazExcel(kamaz_excel_infos, path_to_save=path_to_save_kamaz)
 
 
-def get_waybill_excel_infos(
+async def get_waybill_excel_infos(
     task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
 ):
     excel_infos = []
-    tasks = []
-    if task_ids and not period:
-        tasks = [Task(task_id) for task_id in task_ids]
-    elif not task_ids and period:
-        tasks = itertools.chain(*[Task.get_by_day(date) for date in period])
-    elif not task_ids and not period:
-        raise ValueError("Должен быть заполнен только один аргумент")
+    futures = []
+    async with aiohttp.ClientSession() as session:
+        if task_ids and not period:
+            futures = [asyncio.ensure_future(Task(task_id, session)) for task_id in task_ids]
+        elif not task_ids and period:
+            futures = itertools.chain(*[asyncio.ensure_future(Task.get_by_day(date, session))  for date in period])
+        elif not task_ids and not period:
+            raise ValueError("Должен быть заполнен только один аргумент")
+        print("ensured")
+        tasks = await asyncio.gather(*futures)
 
     for task in tasks:
         start, end = task.start, task.end

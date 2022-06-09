@@ -1,7 +1,10 @@
 /.idea
 test.py
+test_async.py
+test_serial.py
 /Путевые листы
 /Путевые
+/testing
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
