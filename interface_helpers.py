@@ -10,9 +10,9 @@ def get_period(values: dict[str, str]) -> list[datetime]:
     """ Проверить даты и вернуть интервал из начала и конца """
     start_date = datetime.strptime(values["-DATE_START-"], date_format)
     end_date = datetime.strptime(values["-DATE_END-"], date_format)
-    if end_date <= start_date:
+    if end_date < start_date: #Вроде ведь можем брать один день?
         sg.PopupError(
-            "Дата конца промежутка введена неверно. Пожалуйста, укажите дату начала раньше, чем дата конца"
+            "Дата конца промежутка введена неверно. Пожалуйста, укажите дату начала не позже, чем дата конца"
         )
     period_range = []
     while start_date <= end_date:

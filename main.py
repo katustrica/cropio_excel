@@ -68,7 +68,7 @@ async def get_waybill_excel_infos(
             raise ValueError("Должен быть заполнен только один аргумент")
         tasks = await asyncio.gather(*list(futures))
 
-    print(tasks)
+    # print(tasks)
     for task in tasks:
         start, end = task.start, task.end
         machine = task.machine
