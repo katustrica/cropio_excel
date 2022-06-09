@@ -122,9 +122,15 @@ class Task(Base):
         self.end = DateText(datetime.fromisoformat(returned_info.get("end_time")))
 
         self.machine = await Machine.construct(self.machine_id, session=session)
-        self.driver = await Driver.construct(self.driver_id, session=session)
+        try:
+            self.driver = await Driver.construct(self.driver_id, session=session)
+        except:
+            self.driver = "none"
         self.work_type = await WorkType.construct(self.work_type_id, session=session)
-        self.implement = await Implement.construct(self.implement_id, session=session)
+        try:
+            self.implement = await Implement.construct(self.implement_id, session=session)
+        except:
+            self.implement = "none"
         work_distance = returned_info.get("work_distance")
         road_distance = returned_info.get("total_distance") - work_distance
 
@@ -142,7 +148,7 @@ class Task(Base):
             {"start_time_gt_eq": str(start_time), "start_time_lt_eq": str(end_time)},
             session=session,
         )
-        return tuple(await cls(task_data=task_data, session=session) for task_data in returned_info)
+        return [await cls.construct(task_data=task_data, session=session) for task_data in returned_info]
 
 
 class PlanTask(Task):

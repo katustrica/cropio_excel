@@ -44,17 +44,23 @@ async def get_waybill_excel_infos(
     task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
 ):
     excel_infos = []
-    futures = []
     async with aiohttp.ClientSession() as session:
+        futures = []
         if task_ids and not period:
-            futures = [asyncio.ensure_future(Task(task_id, session)) for task_id in task_ids]
+            for task_id in task_ids:
+                future = asyncio.ensure_future(Task(task_id, session))
+                futures.append(future)
+            # futures = [asyncio.ensure_future(Task(task_id, session)) for task_id in task_ids]
         elif not task_ids and period:
-            futures = itertools.chain(*[asyncio.ensure_future(Task.get_by_day(date, session))  for date in period])
+            for date in period:
+                future = asyncio.ensure_future(Task.get_by_day(date, session))
+                futures.append(future)
+            # futures = itertools.chain(*[asyncio.ensure_future(Task.get_by_day(date, session))  for date in period])
         elif not task_ids and not period:
             raise ValueError("Должен быть заполнен только один аргумент")
-        print("ensured")
-        tasks = await asyncio.gather(*futures)
+        tasks = await asyncio.gather(*list(futures))
 
+    print(tasks)
     for task in tasks:
         start, end = task.start, task.end
         machine = task.machine
