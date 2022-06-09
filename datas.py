@@ -148,6 +148,7 @@ class Task(Base):
             {"start_time_gt_eq": str(start_time), "start_time_lt_eq": str(end_time)},
             session=session,
         )
+        return returned_info
         return [await cls.construct(task_data=task_data, session=session) for task_data in returned_info]
 
 

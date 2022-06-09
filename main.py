@@ -48,12 +48,20 @@ async def get_waybill_excel_infos(
         futures = []
         if task_ids and not period:
             for task_id in task_ids:
-                future = asyncio.ensure_future(Task(task_id, session))
+                future = asyncio.ensure_future(Task.construct(task_id, session))
                 futures.append(future)
             # futures = [asyncio.ensure_future(Task(task_id, session)) for task_id in task_ids]
         elif not task_ids and period:
+            futures_by_day = []
             for date in period:
                 future = asyncio.ensure_future(Task.get_by_day(date, session))
+                futures_by_day.append(future)
+            
+            infos_from_period = await asyncio.gather(*futures_by_day)
+            for info_by_day in infos_from_period:
+                for task_data in info_by_day:
+                    future = asyncio.ensure_future(Task.construct(task_data=task_data, session=session))
+                    futures.append(future)
                 futures.append(future)
             # futures = itertools.chain(*[asyncio.ensure_future(Task.get_by_day(date, session))  for date in period])
         elif not task_ids and not period:
