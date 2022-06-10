@@ -7,7 +7,7 @@ from info import date_format
 
 
 def get_period(values: dict[str, str]) -> list[datetime]:
-    """ Проверить даты и вернуть интервал из начала и конца """
+    """Проверить даты и вернуть интервал из начала и конца"""
     start_date = datetime.strptime(values["-DATE_START-"], date_format)
     end_date = datetime.strptime(values["-DATE_END-"], date_format)
     if end_date < start_date:

@@ -1,18 +1,20 @@
 """ Создание файла по полученным данным """
-import pathlib
-from posixpath import abspath
-import sys
 import os
+import pathlib
+import sys
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from dataclasses import dataclass
+from posixpath import abspath
 
 import openpyxl as xl
-from openpyxl.styles import Alignment, Border, Side, Font
+from openpyxl.styles import Alignment, Border, Font, Side
 from openpyxl.workbook.protection import WorkbookProtection
 
 Cells = namedtuple("CELLS", ("name", "page_num", "cell"))
-ProductionCells = namedtuple("PRODUCTIONCELLS", ("name", "page_num", "cell_letter", "start_cell_row"))
+ProductionCells = namedtuple(
+    "PRODUCTIONCELLS", ("name", "page_num", "cell_letter", "start_cell_row")
+)
 
 SIMPLE_CELLS = (
     Cells("task", 0, "F1"),
@@ -41,26 +43,26 @@ KAMAZ_CELLS = (
 )
 
 PRODUCTION_CELLS = (
-    ProductionCells("date", 0, 'A', 2),
-    ProductionCells("crop_name", 0, 'B', 2),
-    ProductionCells("field_name", 0, 'C', 2),
-    ProductionCells("field_area", 0, 'D', 2),
-    ProductionCells("work", 0, 'E', 2),
-    ProductionCells("machine_name", 0, 'G', 2),
-    ProductionCells("implement", 0, 'H', 2),
-    ProductionCells("driver", 0, 'J', 2),
-    ProductionCells("field_work_area", 0, 'K', 2),
-    ProductionCells("road_distance", 0, 'L', 2),
+    ProductionCells("date", 0, "A", 2),
+    ProductionCells("crop_name", 0, "B", 2),
+    ProductionCells("field_name", 0, "C", 2),
+    ProductionCells("field_area", 0, "D", 2),
+    ProductionCells("work", 0, "E", 2),
+    ProductionCells("machine_name", 0, "G", 2),
+    ProductionCells("implement", 0, "H", 2),
+    ProductionCells("driver", 0, "J", 2),
+    ProductionCells("field_work_area", 0, "K", 2),
+    ProductionCells("road_distance", 0, "L", 2),
     # ProductionCells("day_shift", 0, 'M', 2),
     # ProductionCells("night_shift", 0, 'N', 2),
-    ProductionCells("task", 0, 'M', 2),
+    ProductionCells("task", 0, "M", 2),
 )
 PRODUCTION_TASK_CELLS = (
-    ProductionCells("task", 0, 'A', 3),
-    ProductionCells("date", 0, 'B', 3),
-    ProductionCells("driver", 0, 'C', 3),
-    ProductionCells("machine_name", 0, 'E', 3),
-    ProductionCells("machine_number", 0, 'F', 3),
+    ProductionCells("task", 0, "A", 3),
+    ProductionCells("date", 0, "B", 3),
+    ProductionCells("driver", 0, "C", 3),
+    ProductionCells("machine_name", 0, "E", 3),
+    ProductionCells("machine_number", 0, "F", 3),
 )
 
 try:
@@ -124,7 +126,7 @@ class ExcelProductionInfo(ExcelInfo):
 class ExcelFile(ABC):
     """Класс для создания файла по полученным данным"""
 
-    name = ''
+    name = ""
 
     def __init__(
         self, infos: list[ExcelInfo], file_location: str, path_to_save: str = ".\\"
@@ -169,7 +171,7 @@ class WaybillExcel(ExcelFile):
     ):
         """Создаем копию дефолтного файла при создании экземпляра"""
         self.cells = SIMPLE_CELLS
-        self.name = 'Отчет по заданиям'
+        self.name = "Отчет по заданиям"
         super().__init__(infos, file_location, path_to_save)
 
     def fill_file(self, workbook: xl.workbook.Workbook):
@@ -206,7 +208,7 @@ class KamazExcel(ExcelFile):
     ):
         """Создаем копию дефолтного файла при создании экземпляра"""
         self.cells = KAMAZ_CELLS
-        self.name = 'Отчет по заданиям КАМАЗ'
+        self.name = "Отчет по заданиям КАМАЗ"
         super().__init__(infos, file_location, path_to_save)
 
     def fill_file(self, workbook: xl.workbook.Workbook):
@@ -250,7 +252,7 @@ class ProductionExcel(ExcelFile):
         """Создаем копию дефолтного файла при создании экземпляра"""
         self.cells = PRODUCTION_CELLS
         self.task_cells = PRODUCTION_TASK_CELLS
-        self.name = 'Выработка'
+        self.name = "Выработка"
         super().__init__(excel_infos_by_region, file_location, path_to_save)
 
     def fill_file(self, workbook: xl.workbook.Workbook):
@@ -260,8 +262,8 @@ class ProductionExcel(ExcelFile):
         for num_info, (region, infos) in enumerate(self.infos.items()):
             # Создаем и заполняем новый WorkSheet с именем таски
             worksheet = workbook.copy_worksheet(def_worksheet_production)
-            region_name = region.removeprefix('ООО').replace('"', '').strip()
-            title = worksheet.title.replace('Copy', '')
+            region_name = region.removeprefix("ООО").replace('"', "").strip()
+            title = worksheet.title.replace("Copy", "")
             worksheet.title = f"{title} - {region_name}"
 
             row_number = 0
@@ -271,14 +273,16 @@ class ProductionExcel(ExcelFile):
 
                     if "date" == name:
                         if info.driver:
-                            value = f"{info.start_day}.{info.start_month}.{info.start_year}"
+                            value = (
+                                f"{info.start_day}.{info.start_month}.{info.start_year}"
+                            )
                         else:
                             value = ""
                     else:
                         value = getattr(info, name)
 
                     if value:
-                        pos = f'{cell_letter}{start_cell_row+row_number}'
+                        pos = f"{cell_letter}{start_cell_row+row_number}"
                         cell = worksheet[pos]
                         cell.value = value
                         cell.alignment = alignment
@@ -290,8 +294,8 @@ class ProductionExcel(ExcelFile):
         for num_info, (region, infos) in enumerate(self.infos.items()):
             # Создаем и заполняем новый WorkSheet с именем таски
             worksheet = workbook.copy_worksheet(def_worksheet_waybill_list)
-            region_name = region.removeprefix('ООО').replace('"', '').strip()
-            title = worksheet.title.replace('Copy', '')
+            region_name = region.removeprefix("ООО").replace('"', "").strip()
+            title = worksheet.title.replace("Copy", "")
             worksheet.title = f"{title} - {region_name}"
 
             row_number = 0
@@ -301,14 +305,16 @@ class ProductionExcel(ExcelFile):
                 for name, page_num, cell_letter, start_cell_row in self.task_cells:
                     if "date" == name:
                         if info.driver:
-                            value = f"{info.start_day}.{info.start_month}.{info.start_year}"
+                            value = (
+                                f"{info.start_day}.{info.start_month}.{info.start_year}"
+                            )
                         else:
                             value = ""
                     else:
                         value = getattr(info, name)
 
                     if value:
-                        pos = f'{cell_letter}{start_cell_row+row_number}'
+                        pos = f"{cell_letter}{start_cell_row+row_number}"
                         cell = worksheet[pos]
                         cell.value = value
                         cell.alignment = alignment
@@ -320,4 +326,3 @@ class ProductionExcel(ExcelFile):
         # Удаляем дефолтные страницы
         for sheet in (def_worksheet_production, def_worksheet_waybill_list):
             workbook.remove(sheet)
-

@@ -1,7 +1,8 @@
 from datetime import datetime, time, timedelta
 from unittest import TestCase
 
-from main import create_waybill_excels, get_waybill_excel_infos, create_production_excels
+from main import (create_production_excels, create_waybill_excels,
+                  get_waybill_excel_infos)
 
 
 def shifts(start_time: datetime, end_time: datetime):
@@ -76,4 +77,3 @@ class TestRoundedShifts(TestCase):
 class TestProduction(TestCase):
     def test_production(self):
         info_result = create_production_excels([9358, 11009])
-

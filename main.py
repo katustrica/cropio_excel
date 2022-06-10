@@ -1,18 +1,25 @@
 """ Создание файлов """
+import asyncio
 import itertools
 from collections import defaultdict
 from datetime import datetime
 from typing import Optional
-import aiohttp
-import asyncio
 
-from datas import Task, PlanTask
-from excel import ExcelInfo, KamazExcel, WaybillExcel, ExcelProductionInfo, ProductionExcel
+import aiohttp
+
+from datas import PlanTask, Task
+from excel import (ExcelInfo, ExcelProductionInfo, KamazExcel, ProductionExcel,
+                   WaybillExcel)
 from info import DEBUG_LINUX
 
-path_to_save_kamaz = ".\\Путевые листы\\Камазы\\" if not DEBUG_LINUX else 'Путевые листы/Камазы/'
-path_to_save_simple = ".\\Путевые листы\\Обычные\\" if not DEBUG_LINUX else 'Путевые листы/Обычные/'
-path_to_save_production = ".\\Выработка\\" if not DEBUG_LINUX else 'Выработка/'
+path_to_save_kamaz = (
+    ".\\Путевые листы\\Камазы\\" if not DEBUG_LINUX else "Путевые листы/Камазы/"
+)
+path_to_save_simple = (
+    ".\\Путевые листы\\Обычные\\" if not DEBUG_LINUX else "Путевые листы/Обычные/"
+)
+path_to_save_production = ".\\Выработка\\" if not DEBUG_LINUX else "Выработка/"
+
 
 def create_waybill_excels(
     task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
@@ -48,7 +55,9 @@ async def get_waybill_excel_infos(
         futures = []
         if task_ids and not period:
             for task_id in task_ids:
-                future = asyncio.ensure_future(Task.construct(id_for_query=task_id, session=session))
+                future = asyncio.ensure_future(
+                    Task.construct(id_for_query=task_id, session=session)
+                )
                 futures.append(future)
             # futures = [asyncio.ensure_future(Task(task_id, session)) for task_id in task_ids]
         elif not task_ids and period:
@@ -62,7 +71,7 @@ async def get_waybill_excel_infos(
 
     if not task_ids and period:
         tasks = itertools.chain(*tasks)
-    
+
     for task in tasks:
         start, end = task.start, task.end
         machine = task.machine
@@ -99,11 +108,15 @@ def create_production_excels(
     task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
 ):
     """Создать файлы Путевых листов"""
-    excel_infos_by_region = asyncio.run(get_production_excel_infos(task_ids=task_ids, period=period))
+    excel_infos_by_region = asyncio.run(
+        get_production_excel_infos(task_ids=task_ids, period=period)
+    )
     ProductionExcel(excel_infos_by_region, path_to_save=path_to_save_production)
 
 
-async def get_production_excel_infos(task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None):
+async def get_production_excel_infos(
+    task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
+):
     excel_infos_by_region = defaultdict(list)
     tasks = []
 
@@ -111,7 +124,9 @@ async def get_production_excel_infos(task_ids: Optional[list[int]] = None, perio
         futures = []
         if task_ids and not period:
             for task_id in task_ids:
-                future = asyncio.ensure_future(PlanTask.construct(id_for_query=task_id, session=session))
+                future = asyncio.ensure_future(
+                    PlanTask.construct(id_for_query=task_id, session=session)
+                )
                 futures.append(future)
             # futures = [asyncio.ensure_future(Task(task_id, session)) for task_id in task_ids]
         elif not task_ids and period:
@@ -156,11 +171,11 @@ async def get_production_excel_infos(task_ids: Optional[list[int]] = None, perio
                 road_distance=task.road_distance,
                 day_shift=task.day_shift,
                 night_shift=task.night_shift,
-                field_name='',
-                crop_name='',
-                field_area='',
-                field_work_area='',
-                is_transfer=True
+                field_name="",
+                crop_name="",
+                field_area="",
+                field_work_area="",
+                is_transfer=True,
             )
             excel_infos_by_region[region].append(excel_info)
             continue

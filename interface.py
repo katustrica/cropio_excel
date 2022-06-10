@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 
 from info import date_format
 from interface_helpers import get_period
-from main import create_waybill_excels, create_production_excels
+from main import create_production_excels, create_waybill_excels
 
 sg.theme("Tan")
 task_id_table = [
@@ -53,8 +53,22 @@ layout_period = [
             format=date_format,
         ),
     ],
-    [sg.Button("Путевые листы по заданиям", size=(39, 1), key="-START_PERIOD-", expand_x=True)],
-    [sg.Button("Отчёт по планам", size=(39, 1), key="-START_PRODUCTION_PERIOD-", expand_x=True)],
+    [
+        sg.Button(
+            "Путевые листы по заданиям",
+            size=(39, 1),
+            key="-START_PERIOD-",
+            expand_x=True,
+        )
+    ],
+    [
+        sg.Button(
+            "Отчёт по планам",
+            size=(39, 1),
+            key="-START_PRODUCTION_PERIOD-",
+            expand_x=True,
+        )
+    ],
 ]
 
 layuot_date = [
@@ -68,15 +82,27 @@ layuot_date = [
             format=date_format,
         ),
     ],
-    [sg.Button("Путевые листы по заданиям", size=(39, 1), key="-START_DAY-", expand_x=True)],
-    [sg.Button("Отчёт по планам", size=(39, 1), key="-START_PRODUCTION_DAY-", expand_x=True)],
+    [
+        sg.Button(
+            "Путевые листы по заданиям", size=(39, 1), key="-START_DAY-", expand_x=True
+        )
+    ],
+    [
+        sg.Button(
+            "Отчёт по планам", size=(39, 1), key="-START_PRODUCTION_DAY-", expand_x=True
+        )
+    ],
 ]
 
 layuot = [
     [
         sg.TabGroup(
             [
-                [sg.Tab("Список заданий", layout_list), sg.Tab("Период", layout_period), sg.Tab("День", layuot_date),]
+                [
+                    sg.Tab("Список заданий", layout_list),
+                    sg.Tab("Период", layout_period),
+                    sg.Tab("День", layuot_date),
+                ]
             ]
         )
     ]
@@ -98,7 +124,7 @@ while True:  # Event Loop
             window["-LISTBOX-"].update(task_ids)
             window["-TASK_ID-"].update("")
         except Exception as e:
-            sg.popup_error_with_traceback('Ошибка:', e)
+            sg.popup_error_with_traceback("Ошибка:", e)
 
     elif event == "-ADD-":
         try:
@@ -106,21 +132,21 @@ while True:  # Event Loop
             window["-LISTBOX-"].update(task_ids)
             window["-TASK_ID-"].update("")
         except Exception as e:
-            sg.popup_error_with_traceback('Ошибка:', e)
+            sg.popup_error_with_traceback("Ошибка:", e)
     # Поскольку может быть одновременно минимум два непустых поля,
     # были отдельно добавлены кнопки "Создать таблицу"
     elif event == "-START_LIST-":
         try:
             create_waybill_excels(task_ids=task_ids)
         except Exception as e:
-            sg.popup_error_with_traceback('Ошибка:', e)
+            sg.popup_error_with_traceback("Ошибка:", e)
         sg.PopupOK("Готово")
 
     elif event == "-START_PRODUCTION_LIST-":
         try:
             create_production_excels(task_ids=task_ids)
         except Exception as e:
-            sg.popup_error_with_traceback('Ошибка:', e)
+            sg.popup_error_with_traceback("Ошибка:", e)
         sg.PopupOK("Готово")
 
     elif event == "-START_PERIOD-":
@@ -128,7 +154,7 @@ while True:  # Event Loop
             period_range = get_period(values)
             create_waybill_excels(period=period_range)
         except Exception as e:
-            sg.popup_error_with_traceback('Ошибка:', e)
+            sg.popup_error_with_traceback("Ошибка:", e)
         sg.PopupOK("Готово")
 
     elif event == "-START_PRODUCTION_PERIOD-":
@@ -136,7 +162,7 @@ while True:  # Event Loop
             period_range = get_period(values)
             create_production_excels(period=period_range)
         except Exception as e:
-            sg.popup_error_with_traceback('Ошибка:', e)
+            sg.popup_error_with_traceback("Ошибка:", e)
         sg.PopupOK("Готово")
 
     elif event == "-START_DAY-":
@@ -145,7 +171,7 @@ while True:  # Event Loop
                 period=[datetime.strptime(values["-DATE_ONLY_DAY-"], date_format)]
             )
         except Exception as e:
-            sg.popup_error_with_traceback('Ошибка:', e)
+            sg.popup_error_with_traceback("Ошибка:", e)
         sg.PopupOK("Готово")
 
     elif event == "-START_PRODUCTION_DAY-":
@@ -154,7 +180,7 @@ while True:  # Event Loop
                 period=[datetime.strptime(values["-DATE_ONLY_DAY-"], date_format)]
             )
         except Exception as e:
-            sg.popup_error_with_traceback('Ошибка:', e)
+            sg.popup_error_with_traceback("Ошибка:", e)
         sg.PopupOK("Готово")
 
     elif event == "-CALENDAR_START-":

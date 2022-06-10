@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from main import create_waybill_excels, get_waybill_excel_infos
 from datas import TaskFieldMapping
+from main import create_waybill_excels, get_waybill_excel_infos
 
 
 class TestCreateExcels(TestCase):
