@@ -3,10 +3,10 @@
 import locale
 import warnings
 from datetime import datetime, time, timedelta
-from email import header
 from typing import Any, Dict, Optional, Union
 
 import aiohttp
+from async_timeout import asyncio
 import requests
 from aiocache import cached
 
@@ -57,7 +57,7 @@ class Base:
 
     none_base = "none"
     count = 0
-
+    lock = asyncio.Lock()
     @staticmethod
     def request(
         query_type: str,
@@ -78,11 +78,15 @@ class Base:
         session: aiohttp.ClientSession,
         not_empty_query: str = "=",
     ):
-        cls.count += 1
+        
         async with session.get(
             URL + query_type, params=query_filter, headers=HEADERS
         ) as response:
-            return (await response.json())["data"]
+        
+            res = (await response.json())["data"]
+            async with cls.lock:
+                cls.count += 1
+            return res
 
 
 class Task(Base):
