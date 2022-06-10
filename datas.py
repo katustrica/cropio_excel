@@ -37,10 +37,10 @@ class DateText:
         return f"{self.date:%Y}"
 
 
-async def get_region_info(id_for_query, session: Optional[aiohttp.ClientSession] = None):
+async def get_region_info(id_for_query, session: aiohttp.ClientSession):
     global REGION
     if id_for_query not in REGION:
-        returned_region_info = await Base.arequest("machine_regions", {"": ""}, "", session=session)
+        returned_region_info = await Base.arequest("machine_regions", {"": ""}, session, "")
         REGION = {
             responses["id"]: responses["name"] for responses in returned_region_info
         }
@@ -66,11 +66,10 @@ class Base:
     async def arequest(
         query_type: str,
         query_filter: dict[str, Union[str, int]],
+        session: aiohttp.ClientSession,
         not_empty_query: str = "=",
-        session: Optional[aiohttp.ClientSession] = None
     ):
         async with session.get(URL+query_type, params=query_filter, headers=HEADERS) as response:
-            # print(response.url)
             return (await response.json())["data"]
 
 
@@ -81,9 +80,9 @@ class Task(Base):
     @classmethod
     async def construct(
         cls,
+        session: aiohttp.ClientSession,
         id_for_query: Optional[str] = None,
         task_data: Optional[Dict[Any, Any]] = None,
-        session: Optional[aiohttp.ClientSession] = None
     ):
         """get info by request"""
         self = cls()
@@ -93,9 +92,8 @@ class Task(Base):
             warnings.warn("There should be one argument at most")
 
         returned_info = (
-            task_data or (await self.arequest("machine_tasks", {"id": id_for_query}, session=session))[0]
+            task_data or (await cls.arequest("machine_tasks", {"id": str(id_for_query)}, session=session))[0]
         )
-        # print(returned_info.get("implement_id"))
         self.task_id = returned_info.get("id")
         self.machine_id = returned_info.get("machine_id")
         self.driver_id = returned_info.get("driver_id")
@@ -141,7 +139,7 @@ class Task(Base):
         return self
 
     @classmethod
-    async def get_by_day(cls, start_time: datetime, session: Optional[aiohttp.ClientSession] = None):
+    async def get_by_day(cls, start_time: datetime, session: aiohttp.ClientSession):
         end_time = start_time + timedelta(days=1)
         returned_info = await cls.arequest(
             "machine_tasks",
@@ -181,7 +179,7 @@ class Machine(Base):
         self.region = self.none_base
 
     @classmethod
-    async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
+    async def construct(cls, id_for_query: str, session: aiohttp.ClientSession):
         """get info by request"""
         self = cls()
         returned_info = (await self.arequest("machines", {"id": id_for_query}, session=session))[0]
@@ -201,7 +199,7 @@ class Driver(Base):
 
     """class for get requests of driver info"""
     @classmethod
-    async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
+    async def construct(cls, id_for_query: str, session: aiohttp.ClientSession):
         """get info by request"""
         self = cls()
         returned_info = await self.arequest("users", {"id": id_for_query}, session=session)
@@ -222,7 +220,7 @@ class WorkType(Base):
         self.is_transfer = self.none_base
 
     @classmethod
-    async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
+    async def construct(cls, id_for_query: str, session: aiohttp.ClientSession):
         """get info by request"""
         self = cls()
         returned_info = (await self.arequest("work_types", {"id": id_for_query}, session=session))[0]
@@ -238,7 +236,7 @@ class Implement(Base):
         self.registration_number = self.none_base
 
     @classmethod
-    async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
+    async def construct(cls, id_for_query: str, session: aiohttp.ClientSession):
         """get info by request"""
 
         # there is a case when task has not an implement id

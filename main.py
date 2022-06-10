@@ -48,7 +48,7 @@ async def get_waybill_excel_infos(
         futures = []
         if task_ids and not period:
             for task_id in task_ids:
-                future = asyncio.ensure_future(Task.construct(task_id, session))
+                future = asyncio.ensure_future(Task.construct(id_for_query=task_id, session=session))
                 futures.append(future)
             # futures = [asyncio.ensure_future(Task(task_id, session)) for task_id in task_ids]
         elif not task_ids and period:
@@ -58,9 +58,11 @@ async def get_waybill_excel_infos(
             # futures = itertools.chain(*[asyncio.ensure_future(Task.get_by_day(date, session))  for date in period])
         elif not task_ids and not period:
             raise ValueError("Должен быть заполнен только один аргумент")
-        tasks = await asyncio.gather(*list(futures))
+        tasks = await asyncio.gather(*futures)
 
-    tasks = itertools.chain(*tasks)
+    if not task_ids and period:
+        tasks = itertools.chain(*tasks)
+    
     for task in tasks:
         start, end = task.start, task.end
         machine = task.machine
