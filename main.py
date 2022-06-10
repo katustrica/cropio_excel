@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Optional
 import aiohttp
-from async_timeout import asyncio
+import asyncio
 
 from datas import Task, PlanTask
 from excel import ExcelInfo, KamazExcel, WaybillExcel, ExcelProductionInfo, ProductionExcel
@@ -18,7 +18,7 @@ def create_waybill_excels(
     task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
 ):
     """Создать файлы Путевых листов"""
-    excel_infos = get_waybill_excel_infos(task_ids=task_ids, period=period)
+    excel_infos = asyncio.run(get_waybill_excel_infos(task_ids=task_ids, period=period))
     simple_excel_infos, kamaz_excel_infos = [], []
     for excel_info in excel_infos:
         is_kamaz = next(
@@ -48,7 +48,7 @@ async def get_waybill_excel_infos(
         futures = []
         if task_ids and not period:
             for task_id in task_ids:
-                future = asyncio.ensure_future(Task(task_id, session))
+                future = asyncio.ensure_future(Task.construct(task_id, session))
                 futures.append(future)
             # futures = [asyncio.ensure_future(Task(task_id, session)) for task_id in task_ids]
         elif not task_ids and period:

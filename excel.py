@@ -68,12 +68,12 @@ try:
 except:
     abs_path = os.path.abspath(".")
 
-FILE_LOCATION_SIMPLE = f'{abs_path}/def/def_simple.xlsx'
-FILE_LOCATION_KAMAZ = f'{abs_path}/def/def_kamaz.xlsx'
-FILE_LOCATION_PRODUCTION = f"{abs_path}/def/def_production.xlsx"
-# FILE_LOCATION_SIMPLE = f"def_simple.xlsx"
-# FILE_LOCATION_KAMAZ = f"def_kamaz.xlsx"
-# FILE_LOCATION_PRODUCTION = f"def_production.xlsx"
+# FILE_LOCATION_SIMPLE = f'{abs_path}/def/def_simple.xlsx'
+# FILE_LOCATION_KAMAZ = f'{abs_path}/def/def_kamaz.xlsx'
+# FILE_LOCATION_PRODUCTION = f"{abs_path}/def/def_production.xlsx"
+FILE_LOCATION_SIMPLE = f"def_simple.xlsx"
+FILE_LOCATION_KAMAZ = f"def_kamaz.xlsx"
+FILE_LOCATION_PRODUCTION = f"def_production.xlsx"
 
 thin = Side(border_style="thin", color="000000")
 alignment = Alignment(horizontal="center", vertical="center")
