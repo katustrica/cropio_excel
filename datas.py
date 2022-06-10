@@ -5,6 +5,7 @@ import locale
 import warnings
 from datetime import datetime, time, timedelta
 from functools import cache
+from aiocache import cached
 from typing import Any, Dict, Optional, Union
 
 import requests
@@ -46,10 +47,11 @@ async def get_region_info(id_for_query, session: aiohttp.ClientSession):
         }
     return REGION[id_for_query]
 
-
+# count = 0
 class Base:
     """Base class for init"""
     none_base = "none"
+    count = 0
     @staticmethod
     def request(
         query_type: str,
@@ -62,13 +64,15 @@ class Base:
 
         return requests.get(defined_url, headers=HEADERS).json()["data"]
 
-    @staticmethod
+    @classmethod
     async def arequest(
+        cls, 
         query_type: str,
         query_filter: dict[str, Union[str, int]],
         session: aiohttp.ClientSession,
         not_empty_query: str = "=",
     ):
+        cls.count += 1
         async with session.get(URL+query_type, params=query_filter, headers=HEADERS) as response:
             return (await response.json())["data"]
 
@@ -94,6 +98,7 @@ class Task(Base):
         returned_info = (
             task_data or (await cls.arequest("machine_tasks", {"id": str(id_for_query)}, session=session))[0]
         )
+        # print(returned_info)
         self.task_id = returned_info.get("id")
         self.machine_id = returned_info.get("machine_id")
         self.driver_id = returned_info.get("driver_id")
@@ -151,24 +156,30 @@ class Task(Base):
 
 class PlanTask(Task):
     """ Класс заданий для составления плана с информацией о полях """
-    def __init__(
-        self,
+    @classmethod
+    async def construct(
+        cls,
+        session: aiohttp.ClientSession, 
         id_for_query: Optional[str] = None,
         task_data: Optional[Dict[Any, Any]] = None,
     ):
         """get info by request"""
-        super().__init__(id_for_query, task_data)
-        self.task_field_mapping_list = TaskFieldMapping.get_from_task_id(self.task_id)
+        self = cls()
+        task_instance = await super().construct(session=session, id_for_query=id_for_query, task_data=task_data)
+        self.__dict__ = {key: value for key, value in task_instance.__dict__.items()} # TODO , надо исправить, выглядит не очень
+        self.task_field_mapping_list = await TaskFieldMapping.get_from_task_id(self.task_id, session)
+        return self
 
 
     @classmethod
-    def get_by_day(cls, start_time: datetime):
+    async def get_by_day(cls, start_time: datetime, session: aiohttp.ClientSession):
         end_time = start_time + timedelta(days=1)
-        returned_info = cls.request(
+        returned_info = await cls.arequest(
             "machine_tasks",
             {"start_time_gt_eq": str(start_time), "start_time_lt_eq": str(end_time)},
+            session
         )
-        return tuple(PlanTask(task_data=task_data) for task_data in returned_info)
+        return [(await PlanTask.construct(session, task_data=task_data)) for task_data in returned_info]
 
 class Machine(Base):
     """class for get requests of machine info"""
@@ -254,60 +265,68 @@ class Implement(Base):
 class TaskFieldMapping(Base):
     """class for get requests of implement info"""
 
-    def __init__(self, field_id_work: dict[str, Union[str, int, float]]):
+    @classmethod
+    async def construct(cls, field_id_work: dict[str, Union[str, int, float]], session: aiohttp.ClientSession):
         """get info by request"""
+        self = cls()
         field_id = field_id_work['field_id']
-        field = Field(field_id)
+        field = await Field.construct(field_id, session)
 
         self.name = field.name
         self.crop_name = field.crop_name
         self.area = field.area
         self.work_area = round(field_id_work.get('covered_area', 0))
+        return self
 
     @classmethod
-    def get_from_task_id(cls, task_id: str, is_transfer: bool = False) -> tuple['TaskFieldMapping']:
+    async def get_from_task_id(cls, task_id: str, session: aiohttp.ClientSession, is_transfer: bool = False) -> tuple['TaskFieldMapping']:
         """ Получить список планов по ид таски """
-        task_field_mapping = cls.request("machine_task_field_mapping_items", {"machine_task_id": task_id})
-        return tuple(
-            TaskFieldMapping(info) for info in task_field_mapping if info.get('covered_area') >= 1 or is_transfer
-        )
+        task_field_mapping = await cls.arequest("machine_task_field_mapping_items", {"machine_task_id": task_id}, session)
+        return [(await TaskFieldMapping.construct(info, session)) for info in task_field_mapping if info.get('covered_area') >= 1 or is_transfer]
+        
 
 
 class Field(Base):
     """class for get requests of implement info"""
 
-    def __init__(self, id: str):
+    @classmethod
+    async def construct(cls, id: str, session: aiohttp.ClientSession, ):
         """get info by request"""
-        field_info = self.request("fields", {"id": id})[0]
+        self = cls()
+        field_info = (await self.arequest("fields", {"id": id}, session))[0]
         self.id = id
         self.name = field_info['name']
         self.area = field_info['legal_area']
 
-        crop_id = HistoryItems.get_crop_id(id , year)
-        self.crop_name = Crop.get_name(crop_id)
-
+        crop_id = await HistoryItems.get_crop_id(id , year, session)
+        self.crop_name = await Crop.get_name(crop_id, session)
+        return self
 
 class HistoryItems(Base):
     """class for get requests of implement info"""
 
-    def __init__(self, field_id: str, year: str):
+    @classmethod
+    async def construct(cls, field_id: str, year: str, session: aiohttp.ClientSession):
         """get info by request"""
-        self.crop_id = self.request("history_items", {"field_id": field_id, "year": year})[0]['crop_id']
+        self = cls()
+        self.crop_id = (await self.arequest("history_items", {"field_id": field_id, "year": year}, session))[0]['crop_id']
+        return self
 
     @classmethod
-    @cache
-    def get_crop_id(cls, field_id: str, year: str) -> str:
-        return HistoryItems(field_id, year).crop_id
+    @cached()
+    async def get_crop_id(cls, field_id: str, year: str, session: aiohttp.ClientSession) -> str:
+        return (await HistoryItems.construct(field_id, year, session)).crop_id
 
 
 class Crop(Base):
     """class for get requests of implement info"""
-
-    def __init__(self, id: str):
+    @classmethod
+    async def construct(self, id: str, session: aiohttp.ClientSession):
         """get info by request"""
-        self.name = self.request("crops", {"id": id})[0]['name']
+        self.name = (await self.arequest("crops", {"id": id}, session))[0]['name']
+        return self
 
     @classmethod
-    @cache
-    def get_name(cls, id: str) -> str:
-        return Crop(id).name
+    @cached()
+    async def get_name(cls, id: str, session: aiohttp.ClientSession) -> str:
+        return (await Crop.construct(id, session)).name

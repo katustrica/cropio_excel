@@ -99,19 +99,32 @@ def create_production_excels(
     task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
 ):
     """Создать файлы Путевых листов"""
-    excel_infos_by_region = get_production_excel_infos(task_ids=task_ids, period=period)
+    excel_infos_by_region = asyncio.run(get_production_excel_infos(task_ids=task_ids, period=period))
     ProductionExcel(excel_infos_by_region, path_to_save=path_to_save_production)
 
 
-def get_production_excel_infos(task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None):
+async def get_production_excel_infos(task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None):
     excel_infos_by_region = defaultdict(list)
     tasks = []
-    if task_ids and not period:
-        tasks = [PlanTask(task_id) for task_id in task_ids]
-    elif not task_ids and period:
-        tasks = itertools.chain(*[PlanTask.get_by_day(date) for date in period])
-    elif not task_ids and not period:
-        raise ValueError("Должен быть заполнен только один аргумент")
+
+    async with aiohttp.ClientSession() as session:
+        futures = []
+        if task_ids and not period:
+            for task_id in task_ids:
+                future = asyncio.ensure_future(PlanTask.construct(id_for_query=task_id, session=session))
+                futures.append(future)
+            # futures = [asyncio.ensure_future(Task(task_id, session)) for task_id in task_ids]
+        elif not task_ids and period:
+            for date in period:
+                future = asyncio.ensure_future(PlanTask.get_by_day(date, session))
+                futures.append(future)
+            # futures = itertools.chain(*[asyncio.ensure_future(Task.get_by_day(date, session))  for date in period])
+        elif not task_ids and not period:
+            raise ValueError("Должен быть заполнен только один аргумент")
+        tasks = await asyncio.gather(*futures)
+
+    if not task_ids and period:
+        tasks = itertools.chain(*tasks)
 
     for task in tasks:
         start, end = task.start, task.end
