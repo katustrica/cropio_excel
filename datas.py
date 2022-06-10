@@ -49,7 +49,7 @@ async def get_region_info(id_for_query, session: Optional[aiohttp.ClientSession]
 
 class Base:
     """Base class for init"""
-
+    none_base = "none"
     @staticmethod
     def request(
         query_type: str,
@@ -122,15 +122,15 @@ class Task(Base):
         self.end = DateText(datetime.fromisoformat(returned_info.get("end_time")))
 
         self.machine = await Machine.construct(self.machine_id, session=session)
+        self.work_type = await WorkType.construct(self.work_type_id, session=session)
         try:
             self.driver = await Driver.construct(self.driver_id, session=session)
         except:
-            self.driver = "none"
-        self.work_type = await WorkType.construct(self.work_type_id, session=session)
+            self.driver = Driver()
         try:
             self.implement = await Implement.construct(self.implement_id, session=session)
         except:
-            self.implement = "none"
+            self.implement = Implement()
         work_distance = returned_info.get("work_distance")
         road_distance = returned_info.get("total_distance") - work_distance
 
@@ -172,9 +172,13 @@ class PlanTask(Task):
         )
         return tuple(PlanTask(task_data=task_data) for task_data in returned_info)
 
-
 class Machine(Base):
     """class for get requests of machine info"""
+
+    def __init__(self):
+        self.name = self.none_base
+        self.number = self.none_base
+        self.region = self.none_base
 
     @classmethod
     async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
@@ -191,6 +195,10 @@ class Machine(Base):
 
 
 class Driver(Base):
+    def __init__(self):
+        self.driver_name = self.none_base
+        self.additional_info = self.none_base
+
     """class for get requests of driver info"""
     @classmethod
     async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
@@ -209,6 +217,10 @@ class Driver(Base):
 
 class WorkType(Base):
     """class for get requests of work_type info"""
+    def __init__(self):
+        self.work_type_name = self.none_base
+        self.is_transfer = self.none_base
+
     @classmethod
     async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
         """get info by request"""
@@ -221,6 +233,10 @@ class WorkType(Base):
 
 class Implement(Base):
     """class for get requests of implement info"""
+    def __init__(self):
+        self.implement_name = self.none_base
+        self.registration_number = self.none_base
+
     @classmethod
     async def construct(cls, id_for_query: str, session: Optional[aiohttp.ClientSession] = None):
         """get info by request"""
