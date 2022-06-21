@@ -43,19 +43,32 @@ KAMAZ_CELLS = (
 )
 
 PRODUCTION_CELLS = (
-    ProductionCells("date", 0, "A", 2),
-    ProductionCells("crop_name", 0, "B", 2),
-    ProductionCells("field_name", 0, "C", 2),
-    ProductionCells("field_area", 0, "D", 2),
-    ProductionCells("work", 0, "E", 2),
-    ProductionCells("machine_name", 0, "G", 2),
-    ProductionCells("implement", 0, "H", 2),
-    ProductionCells("driver", 0, "J", 2),
-    ProductionCells("field_work_area", 0, "K", 2),
-    ProductionCells("road_distance", 0, "L", 2),
-    # ProductionCells("day_shift", 0, 'M', 2),
-    # ProductionCells("night_shift", 0, 'N', 2),
-    ProductionCells("task", 0, "M", 2),
+    ProductionCells("date", 0, 'A', 2),
+    ProductionCells("crop_name", 0, 'B', 2),
+    ProductionCells("field_name", 0, 'C', 2),
+    ProductionCells("field_area", 0, 'D', 2),
+    ProductionCells("work", 0, 'E', 2),
+    ProductionCells("unit", 0, 'F', 2),
+    ProductionCells("machine_name", 0, 'G', 2),
+    ProductionCells("implement", 0, 'H', 2),
+    ProductionCells("driver", 0, 'J', 2),
+
+    ProductionCells("day_shift", 0, 'K', 2),
+    ProductionCells("night_shift", 0, 'L', 2),
+
+    ProductionCells("field_work_area", 0, 'M', 2),
+    ProductionCells("day_covered_work", 0, 'N', 2),
+    ProductionCells("night_covered_work", 0, 'O', 2),
+    ProductionCells("day_covered_hour", 0, 'P', 2),
+    ProductionCells("night_covered_hour", 0, 'Q', 2),
+
+    ProductionCells("road_distance", 0, 'R', 2),
+    ProductionCells("day_distance_work", 0, 'S', 2),
+    ProductionCells("night_distance_work", 0, 'T', 2),
+    ProductionCells("day_distance_hour", 0, 'U', 2),
+    ProductionCells("night_distance_hour", 0, 'V', 2),
+
+    ProductionCells("task", 0, 'W', 2),
 )
 PRODUCTION_TASK_CELLS = (
     ProductionCells("task", 0, "A", 3),
@@ -65,17 +78,12 @@ PRODUCTION_TASK_CELLS = (
     ProductionCells("machine_number", 0, "F", 3),
 )
 
-try:
-    abs_path = sys._MEIPASS
-except:
-    abs_path = os.path.abspath(".")
-
-# FILE_LOCATION_SIMPLE = f'{abs_path}/def/def_simple.xlsx'
-# FILE_LOCATION_KAMAZ = f'{abs_path}/def/def_kamaz.xlsx'
-# FILE_LOCATION_PRODUCTION = f"{abs_path}/def/def_production.xlsx"
-FILE_LOCATION_SIMPLE = f"def_simple.xlsx"
-FILE_LOCATION_KAMAZ = f"def_kamaz.xlsx"
-FILE_LOCATION_PRODUCTION = f"def_production.xlsx"
+FILE_LOCATION_SIMPLE = f'{sys._MEIPASS}/def/def_simple.xlsx'
+FILE_LOCATION_KAMAZ = f'{sys._MEIPASS}/def/def_kamaz.xlsx'
+FILE_LOCATION_PRODUCTION = f"{sys._MEIPASS}/def/def_production.xlsx"
+# FILE_LOCATION_SIMPLE = f"def_simple.xlsx"
+# FILE_LOCATION_KAMAZ = f"def_kamaz.xlsx"
+# FILE_LOCATION_PRODUCTION = f"def_production.xlsx"
 
 thin = Side(border_style="thin", color="000000")
 alignment = Alignment(horizontal="center", vertical="center")
@@ -120,6 +128,15 @@ class ExcelProductionInfo(ExcelInfo):
     crop_name: str
     field_area: float
     field_work_area: float
+    unit: str
+    day_covered_hour: int
+    night_covered_hour: int
+    day_covered_work: int
+    night_covered_work: int
+    day_distance_hour: int
+    night_distance_hour: int
+    day_distance_work: int
+    night_distance_work: int
     is_transfer: bool = False
 
 
@@ -226,8 +243,12 @@ class KamazExcel(ExcelFile):
             for name, sheet_num, pos in self.cells:
                 if "driver_short" in name:
                     if info.driver:
-                        surname, name, middlename = info.driver.split(" ")
-                        value = f"{surname} {name[0]}. {middlename[0]}."
+                        try:
+                            surname, name, middlename = info.driver.split(" ")
+                            value = f"{surname} {name[0]}. {middlename[0]}."
+                        except Exception as e:
+                            import pdb; pdb.set_trace()
+                            raise ValueError(f'Неправильное имя водителя: {info.driver}')
                     else:
                         value = ""
                 else:

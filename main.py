@@ -25,7 +25,7 @@ def create_waybill_excels(
     task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
 ):
     """Создать файлы Путевых листов"""
-    excel_infos = asyncio.run(get_waybill_excel_infos(task_ids=task_ids, period=period))
+    excel_infos = asyncio.get_event_loop().run_until_complete(get_waybill_excel_infos(task_ids=task_ids, period=period))
     simple_excel_infos, kamaz_excel_infos = [], []
     for excel_info in excel_infos:
         is_kamaz = next(
@@ -108,7 +108,7 @@ def create_production_excels(
     task_ids: Optional[list[int]] = None, period: Optional[list[datetime]] = None
 ):
     """Создать файлы Путевых листов"""
-    excel_infos_by_region = asyncio.run(
+    excel_infos_by_region = asyncio.get_event_loop().run_until_complete(
         get_production_excel_infos(task_ids=task_ids, period=period)
     )
     ProductionExcel(excel_infos_by_region, path_to_save=path_to_save_production)
@@ -171,10 +171,19 @@ async def get_production_excel_infos(
                 road_distance=task.road_distance,
                 day_shift=task.day_shift,
                 night_shift=task.night_shift,
-                field_name="",
-                crop_name="",
-                field_area="",
-                field_work_area="",
+                field_name='',
+                crop_name='',
+                field_area='',
+                field_work_area='',
+                unit='Км',
+                day_covered_hour='',
+                night_covered_hour='',
+                day_covered_work='',
+                night_covered_work='',
+                day_distance_hour=task.day_distance_hour,
+                night_distance_hour=task.night_distance_hour,
+                day_distance_work=task.day_distance_work,
+                night_distance_work=task.night_distance_work,
                 is_transfer=True,
             )
             excel_infos_by_region[region].append(excel_info)
@@ -209,6 +218,15 @@ async def get_production_excel_infos(
                 crop_name=task_field_mapping.crop_name,
                 field_area=task_field_mapping.area,
                 field_work_area=task_field_mapping.work_area,
+                unit='Га',
+                day_covered_hour=task_field_mapping.day_covered_hour,
+                night_covered_hour=task_field_mapping.night_covered_hour,
+                day_covered_work=task_field_mapping.day_covered_work,
+                night_covered_work=task_field_mapping.night_covered_work,
+                day_distance_hour=task_field_mapping.day_distance_hour,
+                night_distance_hour=task_field_mapping.night_distance_hour,
+                day_distance_work=task_field_mapping.day_distance_work,
+                night_distance_work=task_field_mapping.night_distance_work,
             )
             excel_infos_by_region[region].append(excel_info)
     return excel_infos_by_region

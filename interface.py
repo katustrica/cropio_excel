@@ -124,7 +124,7 @@ while True:  # Event Loop
             window["-LISTBOX-"].update(task_ids)
             window["-TASK_ID-"].update("")
         except Exception as e:
-            sg.popup_error_with_traceback("Ошибка:", e)
+            sg.PopupError("Ошибка:", e)
 
     elif event == "-ADD-":
         try:
@@ -132,55 +132,40 @@ while True:  # Event Loop
             window["-LISTBOX-"].update(task_ids)
             window["-TASK_ID-"].update("")
         except Exception as e:
-            sg.popup_error_with_traceback("Ошибка:", e)
+            sg.PopupError("Ошибка:", e)
     # Поскольку может быть одновременно минимум два непустых поля,
     # были отдельно добавлены кнопки "Создать таблицу"
     elif event == "-START_LIST-":
         try:
             create_waybill_excels(task_ids=task_ids)
         except Exception as e:
-            sg.popup_error_with_traceback("Ошибка:", e)
+            sg.PopupError("Ошибка:", e)
         sg.PopupOK("Готово")
 
     elif event == "-START_PRODUCTION_LIST-":
-        try:
-            create_production_excels(task_ids=task_ids)
-        except Exception as e:
-            sg.popup_error_with_traceback("Ошибка:", e)
+        create_production_excels(task_ids=task_ids)
         sg.PopupOK("Готово")
 
     elif event == "-START_PERIOD-":
-        try:
-            period_range = get_period(values)
-            create_waybill_excels(period=period_range)
-        except Exception as e:
-            sg.popup_error_with_traceback("Ошибка:", e)
+        period_range = get_period(values)
+        create_waybill_excels(period=period_range)
         sg.PopupOK("Готово")
 
     elif event == "-START_PRODUCTION_PERIOD-":
-        try:
-            period_range = get_period(values)
-            create_production_excels(period=period_range)
-        except Exception as e:
-            sg.popup_error_with_traceback("Ошибка:", e)
+        period_range = get_period(values)
+        create_production_excels(period=period_range)
         sg.PopupOK("Готово")
 
     elif event == "-START_DAY-":
-        try:
-            create_waybill_excels(
-                period=[datetime.strptime(values["-DATE_ONLY_DAY-"], date_format)]
-            )
-        except Exception as e:
-            sg.popup_error_with_traceback("Ошибка:", e)
+        create_waybill_excels(
+            period=[datetime.strptime(values["-DATE_ONLY_DAY-"], date_format)]
+        )
         sg.PopupOK("Готово")
 
     elif event == "-START_PRODUCTION_DAY-":
-        try:
-            create_production_excels(
-                period=[datetime.strptime(values["-DATE_ONLY_DAY-"], date_format)]
-            )
-        except Exception as e:
-            sg.popup_error_with_traceback("Ошибка:", e)
+        create_production_excels(
+            period=[datetime.strptime(values["-DATE_ONLY_DAY-"], date_format)]
+        )
         sg.PopupOK("Готово")
 
     elif event == "-CALENDAR_START-":
