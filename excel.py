@@ -89,6 +89,7 @@ thin = Side(border_style="thin", color="000000")
 alignment = Alignment(horizontal="center", vertical="center")
 border = Border(top=thin, left=thin, right=thin, bottom=thin)
 font = Font(size=9)
+red_font = Font(size=9, color="FF0000")
 
 
 @dataclass
@@ -292,13 +293,10 @@ class ProductionExcel(ExcelFile):
 
                 for name, page_num, cell_letter, start_cell_row in self.cells:
 
-                    if "date" == name:
-                        if info.driver:
-                            value = (
-                                f"{info.start_day}.{info.start_month}.{info.start_year}"
-                            )
-                        else:
-                            value = ""
+                    if name == "date" :
+                        value = (
+                            f"{info.start_day}.{info.start_month}.{info.start_year}"
+                        )
                     else:
                         value = getattr(info, name)
 
@@ -308,7 +306,10 @@ class ProductionExcel(ExcelFile):
                         cell.value = value
                         cell.alignment = alignment
                         cell.border = border
-                        cell.font = font
+                        if name == 'field_work_area' and isinstance(value, float) and 0 < value < 1:
+                            cell.font = red_font
+                        else:
+                            cell.font = font
                 row_number += 1
 
         task_ids_done = []

@@ -415,7 +415,7 @@ class Field(Base):
         self.area = field_info["legal_area"]
 
         crop_id = await HistoryItems.get_crop_id(id, year, session)
-        self.crop_name = await Crop.get_name(crop_id, session)
+        self.crop_name = await Crop.get_name(crop_id, session) if crop_id else ''
         return self
 
 
