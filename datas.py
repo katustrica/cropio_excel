@@ -156,20 +156,26 @@ class Task(Base):
         road_distance = returned_info.get("total_distance") - work_distance
 
         if self.work_type.is_transfer:
-            distance_hourly = {int(info[0][10:13]): info[1] for info in returned_info.get('total_distance_hourly')}
-            self.day_distance_hour = 0
-            self.night_distance_hour = 0
+            # TimeZone +3
+            distance_hourly = {int(info[0][10:13])+3: info[1] for info in returned_info.get('total_distance_hourly')}
             day_distance_work = 0
             night_distance_work = 0
             for hour, work in distance_hourly.items():
                 if 6 <= hour < 22:
-                    self.day_distance_hour += 1
                     day_distance_work += work
                 else:
-                    self.night_distance_hour += 1
                     night_distance_work += work
             self.day_distance_work = round(day_distance_work / 1000)
             self.night_distance_work = round(night_distance_work / 1000)
+
+            distance_duration = {int(time[10:13])+3: duration for time, duration in returned_info.get('movements_on_road_duration_hourly').items()}
+            self.day_distance_hour = 0
+            self.night_distance_hour = 0
+            for hour, duration in distance_duration.items():
+                if 6 <= hour < 22:
+                    self.day_distance_hour += round(duration/3600, 2)
+                else:
+                    self.night_distance_hour += round(duration/3600, 2)
         else:
             self.day_distance_hour = 0
             self.night_distance_hour = 0
@@ -349,7 +355,8 @@ class TaskFieldMapping(Base):
         self.area = field.area
         self.work_area = round(field_id_work.get("covered_area", 0))
 
-        distance_hourly = {int(info[0][10:13]): info[1] for info in field_id_work.get('work_distance_hourly')}
+        # TimeZone +3
+        distance_hourly = {int(info[0][10:13])+3: info[1] for info in field_id_work.get('work_distance_hourly')}
         self.day_distance_hour = 0
         self.night_distance_hour = 0
         day_distance_work = 0
@@ -361,25 +368,34 @@ class TaskFieldMapping(Base):
             else:
                 self.night_distance_hour += 1
                 night_distance_work += work
-        # self.day_distance_work = round(day_distance_work / 1000)
-        # self.night_distance_work = round(night_distance_work / 1000)
+
         self.day_distance_work = ''
         self.night_distance_work = ''
 
-        covered_area_hourly = {int(info[0][10:13]): info[1] for info in field_id_work.get('covered_area_hourly')}
-        self.day_covered_hour = 0
-        self.night_covered_hour = 0
+        # TimeZone +3
+        covered_area_hourly = {int(info[0][10:13])+3: info[1] for info in field_id_work.get('covered_area_hourly')}
         day_covered_work = 0
         night_covered_work = 0
         for hour, work in covered_area_hourly.items():
             if 6 <= hour < 22:
-                self.day_covered_hour += 1
                 day_covered_work += work
             else:
-                self.night_covered_hour += 1
                 night_covered_work += work
         self.day_covered_work = round(day_covered_work)
         self.night_covered_work = round(night_covered_work)
+
+        # TimeZone +3
+        covered_area_hourly = {int(info[0][10:13])+3: info[1] for info in field_id_work.get('work_duration_hourly')}
+        day_covered_hour = 0
+        night_covered_hour = 0
+        for hour, duration in covered_area_hourly.items():
+            if 6 <= hour < 22:
+                day_covered_hour += round(duration/3600, 2)
+            else:
+                night_covered_hour += round(duration/3600, 2)
+        self.day_covered_hour = day_covered_hour
+        self.night_covered_hour = night_covered_hour
+
         return self
 
 

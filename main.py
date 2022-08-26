@@ -85,6 +85,7 @@ async def get_waybill_excel_infos(
             end_day=end.day,
             end_month=end.month,
             end_year=end.year,
+            machine_id=task.machine_id,
             machine_name=machine.name,
             machine_number=machine.number,
             machine_region=machine.region,
@@ -157,6 +158,7 @@ async def get_production_excel_infos(
                 end_day=end.day,
                 end_month=end.month,
                 end_year=end.year,
+                machine_id=task.machine_id,
                 machine_name=machine.name,
                 machine_number=machine.number,
                 machine_region=machine.region,
@@ -200,6 +202,7 @@ async def get_production_excel_infos(
                 end_day=end.day,
                 end_month=end.month,
                 end_year=end.year,
+                machine_id=task.machine_id,
                 machine_name=machine.name,
                 machine_number=machine.number,
                 machine_region=machine.region,
@@ -223,10 +226,10 @@ async def get_production_excel_infos(
                 night_covered_hour=task_field_mapping.night_covered_hour,
                 day_covered_work=task_field_mapping.day_covered_work,
                 night_covered_work=task_field_mapping.night_covered_work,
-                day_distance_hour=task_field_mapping.day_distance_hour,
-                night_distance_hour=task_field_mapping.night_distance_hour,
-                day_distance_work=task_field_mapping.day_distance_work,
-                night_distance_work=task_field_mapping.night_distance_work,
+                day_distance_hour=task.day_distance_hour,
+                night_distance_hour=task.night_distance_hour,
+                day_distance_work=task.day_distance_work,
+                night_distance_work=task.night_distance_work,
             )
             excel_infos_by_region[region].append(excel_info)
     return excel_infos_by_region

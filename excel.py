@@ -105,6 +105,7 @@ class ExcelInfo:
     end_day: str
     end_month: str
     end_year: str
+    machine_id: int
     machine_name: str
     machine_number: str
     machine_region: str
@@ -206,6 +207,10 @@ class WaybillExcel(ExcelFile):
                         f"{info.start_day} {info.start_month} {info.start_year}г. {info.start_time} - "
                         f"{info.end_day} {info.end_month} {info.end_year}г. {info.end_time}"
                     )
+                elif name == 'task' and info.machine_id:
+                    value = '=HYPERLINK("{}", "{}")'.format(
+                        f"https://operations.cropwise.com/machines/{info.machine_id}/tasks/{info.task}", info.task
+                    )
                 else:
                     value = getattr(info, name)
 
@@ -252,6 +257,10 @@ class KamazExcel(ExcelFile):
                             raise ValueError(f'Неправильное имя водителя: {info.driver}')
                     else:
                         value = ""
+                elif name == 'task' and info.machine_id:
+                    value = '=HYPERLINK("{}", "{}")'.format(
+                        f"https://operations.cropwise.com/machines/{info.machine_id}/tasks/{info.task}", info.task
+                    )
                 else:
                     value = getattr(info, name)
                 if value:
@@ -308,6 +317,10 @@ class ProductionExcel(ExcelFile):
                         cell.border = border
                         if name == 'field_work_area' and isinstance(value, float) and 0 <= value <= 1:
                             cell.font = red_font
+                        elif name == 'task' and info.machine_id:
+                            cell.value = '=HYPERLINK("{}", "{}")'.format(
+                                f"https://operations.cropwise.com/machines/{info.machine_id}/tasks/{info.task}", info.task
+                            )
                         else:
                             cell.font = font
                 row_number += 1
