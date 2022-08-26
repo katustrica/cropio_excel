@@ -345,6 +345,10 @@ class ProductionExcel(ExcelFile):
                             )
                         else:
                             value = ""
+                    elif name == 'task' and info.machine_id:
+                        value = '=HYPERLINK("{}", "{}")'.format(
+                            f"https://operations.cropwise.com/machines/{info.machine_id}/tasks/{info.task}", info.task
+                        )
                     else:
                         value = getattr(info, name)
 
