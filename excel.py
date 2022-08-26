@@ -306,7 +306,7 @@ class ProductionExcel(ExcelFile):
                         cell.value = value
                         cell.alignment = alignment
                         cell.border = border
-                        if name == 'field_work_area' and isinstance(value, float) and 0 < value < 1:
+                        if name == 'field_work_area' and isinstance(value, float) and 0 <= value <= 1:
                             cell.font = red_font
                         else:
                             cell.font = font

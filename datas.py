@@ -347,7 +347,7 @@ class TaskFieldMapping(Base):
         self.name = field.name
         self.crop_name = field.crop_name
         self.area = field.area
-        self.work_area = field_id_work.get("covered_area", 0)
+        self.work_area = round(field_id_work.get("covered_area", 0))
 
         distance_hourly = {int(info[0][10:13]): info[1] for info in field_id_work.get('work_distance_hourly')}
         self.day_distance_hour = 0
@@ -378,8 +378,8 @@ class TaskFieldMapping(Base):
             else:
                 self.night_covered_hour += 1
                 night_covered_work += work
-        self.day_covered_work = day_covered_work
-        self.night_covered_work = night_covered_work
+        self.day_covered_work = round(day_covered_work)
+        self.night_covered_work = round(night_covered_work)
         return self
 
 

@@ -217,7 +217,7 @@ async def get_production_excel_infos(
                 field_name=task_field_mapping.name,
                 crop_name=task_field_mapping.crop_name,
                 field_area=task_field_mapping.area,
-                field_work_area=task_field_mapping.work_area,
+                field_work_area=round(task_field_mapping.work_area),
                 unit='Га',
                 day_covered_hour=task_field_mapping.day_covered_hour,
                 night_covered_hour=task_field_mapping.night_covered_hour,
