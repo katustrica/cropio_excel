@@ -168,7 +168,7 @@ class Task(Base):
             self.day_distance_work = round(day_distance_work / 1000)
             self.night_distance_work = round(night_distance_work / 1000)
 
-            distance_duration = {int(time[10:13])+3: duration for time, duration in returned_info.get('movements_on_road_duration_hourly').items()}
+            distance_duration = {int(time[10:13])+3: duration for time, duration in (returned_info.get('movements_on_road_duration_hourly') or {}).items()}
             self.day_distance_hour = 0
             self.night_distance_hour = 0
             for hour, duration in distance_duration.items():
